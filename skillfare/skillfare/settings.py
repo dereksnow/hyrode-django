@@ -167,3 +167,14 @@ LOGGING = {
         },
     }
 }
+
+# registration settings
+ACCOUNT_ACTIVATION_DAYS = 1
+
+
+#email stuff
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'derektestdjango@gmail.com'
+EMAIL_HOST_PASSWORD = 'pwftda1970'
+EMAIL_PORT = 587
