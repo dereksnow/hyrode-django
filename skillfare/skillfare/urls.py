@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, include, url
-from bookmarks.views import main_page
+from bookmarks.views import *
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
