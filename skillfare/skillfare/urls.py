@@ -8,6 +8,7 @@ from bookmarks.views import main_page
 urlpatterns = patterns('',
 
 	url(r'^$', main_page),
+	url(r'^user/(\w+)/$', user_page),
 	url(r'^accounts/', include('registration.urls')),
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
