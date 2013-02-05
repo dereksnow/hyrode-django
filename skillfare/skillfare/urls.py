@@ -10,8 +10,11 @@ from registration.views import register
 
 urlpatterns = patterns('',
 
+	# Browsing
 	url(r'^$', main_page),
 	url(r'^user/([\w.@+-]+)/$', user_page),
+
+	# Session Management
     url(r'^accounts/register/$', register,
 		{'backend': 'registration.backends.default.DefaultBackend', 
 	 	'form_class': ValidPasswordRegistrationForm},
@@ -22,6 +25,10 @@ urlpatterns = patterns('',
 		name='auth_password_change'),    
 
 	url(r'^accounts/', include('registration.urls')),
+
+	# Account management
+	url(r'^save/$', bookmark_save_page),
+
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
