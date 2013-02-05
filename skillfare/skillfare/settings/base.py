@@ -165,9 +165,9 @@ DJANGO_APPS = (
 )
 
 THIRD_PARTY_APPS = (
-    # Database migration helpers:
     'south',
     'registration',
+    'tagging',
 )
 
 # Apps specific for this project go here.
@@ -213,9 +213,13 @@ LOGGING = {
 ACCOUNT_ACTIVATION_DAYS = 1
 
 
-#email stuff
+# email host configuration
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'derektestdjango@gmail.com'
 EMAIL_HOST_PASSWORD = 'pwftda1970'
 EMAIL_PORT = 587
+
+
+# django-tagging settings
+FORCE_LOWERCASE_TAGS = True
