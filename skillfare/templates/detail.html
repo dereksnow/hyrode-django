@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}
+    Bookmark: {{ bookmark.title }}
+{% endblock %}
+{% block head %}
+    {{ bookmark.title }}
+{% endblock %}
+{% block content %}
+    <a href="{{ bookmark.link.url }}" class="title">
+        {{ bookmark.title }}
+    </a>
+    <br/>    
+    {% if bookmark.tags %}
+    tags:
+        <ul class="tags">
+            {% for tag in bookmark.tags.all %}
+                <li>
+                    <a href="/tag/{{ tag.name|urlencode }}/">
+                    {{ tag.name }}</a>
+                </li>
+                {% if not forloop.last %},{% endif %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

@@ -3,9 +3,16 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
 from bookmarks.models import Bookmark, Link
-from tagging.models import Tag
 from bookmarks.forms import BookmarkSaveForm
 from django.contrib.auth.decorators import login_required
+
+from django.views.generic import DetailView
+from bookmarks.models import Bookmark
+
+
+class BookmarkDetailView(DetailView):
+	model = Bookmark
+	template_name = 'detail.html'
 
 def main_page(request):
 	variables = {'user': request.user}
@@ -34,27 +41,28 @@ def bookmark_save_page(request):
 			#Update bookmark title. 
 			bookmark.title = form.cleaned_data['title']
 
-			#If the bookmark is being updated, clear old tag list.
-			#if not created:
-			#	bookmark.tag_set.clear()
-			# Create new tag list.
-
-			# get tags
-			tag_names = form.cleaned_data['tags']
-			# update bookmark with tags
-			Tag.objects.update_tags(bookmark, tag_names)
-
-			#for tag_name in tag_names:
-			#	tag, dummy = Tag.objects.get_or_create(name=tag_name)
-			#	bookmark.tag_set.add(tag)
-
 			# Save bookmark to database.
 			bookmark.save()
+
+			# Using django-taggit tags added after bookmark is saved
+			# Get tags from form
+			tags = form.cleaned_data['tags']
+
+			for tag in tags:
+				bookmark.tags.add(tag)
+			
 			return HttpResponseRedirect('/user/%s/' % request.user.username)
 	else:
 		form = BookmarkSaveForm()
 	variables = {'form': form}
 	return render(request, 'bookmark_save.html', variables)
+
+def tag_page(request, tag_name):
+	#tag = get_object_or_404(Tag, name=tag_name)
+	bookmarks = Bookmark.objects.filter(tags__name=tag_name).order_by('-modified')
+	variables = {'bookmarks': bookmarks, 'tag_name': tag_name,
+					'show_tags': True, 'show_user': True}
+	return render(request, 'tag_page.html', variables)
 
 				
 

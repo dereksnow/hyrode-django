@@ -167,7 +167,8 @@ DJANGO_APPS = (
 THIRD_PARTY_APPS = (
     'south',
     'registration',
-    'tagging',
+    'taggit',
+    'haystack',
 )
 
 # Apps specific for this project go here.
@@ -221,5 +222,8 @@ EMAIL_HOST_PASSWORD = 'pwftda1970'
 EMAIL_PORT = 587
 
 
-# django-tagging settings
-FORCE_LOWERCASE_TAGS = True
+# haystack settings
+HAYSTACK_SITECONF = 'skillfare.search_sites'
+HAYSTACK_SEARCH_ENGINE = 'whoosh'
+
+HAYSTACK_WHOOSH_PATH = '/home/derek/Development/skillfare/skillfare/whoosh/skillfare_index'

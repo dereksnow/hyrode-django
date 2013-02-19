@@ -1,4 +1,3 @@
-{% load tagging_tags %}
 {% if bookmarks %}
 	<ul class="bookmarks">
 		{% for bookmark in bookmarks %}
@@ -7,13 +6,13 @@
 					{{ bookmark.title }}
 				</a>
 				<br/>
-				{% tags_for_object bookmark as tag_list %}
 				{% if show_tags %}
 					Tags:					
-					{% if tag_list %}
+					{% if bookmark.tags %}
 						<ul class="tags">
-							{% for tag in tag_list %}
-								<li>{{ tag.name }}</li>{% if not forloop.last %},{% endif %}
+							{% for tag in bookmark.tags.all %}
+								<li><a href="/tag/{{ tag.name|urlencode }}/">
+									{{ tag.name }}</a></li>{% if not forloop.last %},{% endif %}
 							{% endfor %}
 						</ul>
 					{% else %}

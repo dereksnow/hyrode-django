@@ -13,6 +13,13 @@ urlpatterns = patterns('',
 	# Browsing
 	url(r'^$', main_page),
 	url(r'^user/([\w.@+-]+)/$', user_page),
+	url(r'^tag/([\w\s]+)/$', tag_page),
+
+	url(regex=r'^(?P<pk>\d+)/$', view=BookmarkDetailView.as_view(), 
+		name='detail'),
+
+	# Search
+	url(r'^search/', include('haystack.urls')),
 
 	# Session Management
     url(r'^accounts/register/$', register,
