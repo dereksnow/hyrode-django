@@ -169,6 +169,7 @@ THIRD_PARTY_APPS = (
     'registration',
     'taggit',
     'haystack',
+    'djangoratings',
 )
 
 # Apps specific for this project go here.

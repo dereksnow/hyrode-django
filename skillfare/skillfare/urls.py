@@ -3,6 +3,7 @@ from bookmarks.views import *
 from django.contrib.auth import views as auth_views
 from password_validation.forms import ValidPasswordRegistrationForm, ValidPasswordChangeForm
 from registration.views import register
+from djangoratings.views import AddRatingFromModel
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -17,6 +18,13 @@ urlpatterns = patterns('',
 
 	url(regex=r'^(?P<pk>\d+)/$', view=BookmarkDetailView.as_view(), 
 		name='detail'),
+
+    # Ratings
+    url(r'^rate/(?P<object_id>\d+)/(?P<score>\d+)/', AddRatingFromModel(), {
+        'app_label': 'bookmarks',
+        'model': 'bookmark',
+        'field_name': 'rating',
+    }),    
 
 	# Search
 	url(r'^search/', include('haystack.urls')),

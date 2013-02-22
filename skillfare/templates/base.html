@@ -1,32 +1,54 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
-	<head>
-		<title>{% block title %}
-			{% endblock %} | SkillFare
-		</title>
-		<link href="{{ STATIC_URL }}style.css" rel="stylesheet">
-		<script type="text/javascript" src="{{ STATIC_URL}}jquery.js"></script>
-		{% block external %}
-		{% endblock %}
-	</head>
-	<body>
-		<div id="nav">
-			<a href="/">home</a> | 
-			{% if user.is_authenticated %}
-				<a href="/save/">add bookmark</a> |
-				logged in as {{ user.username }}
-				(<a href="/accounts/logout/">logout</a>)				
-			{% else %}
-				<a href="/accounts/login/">login</a> |
-				<a href="/accounts/register/">register</a>
-			{% endif %}
-		</div>
+    <head>
+        <title>{% block title %}
+            {% endblock %} | SkillFare
+        </title>
+        <link href="{{ STATIC_URL }}style.css" rel="stylesheet">
+        <script type="text/javascript" src="{{ STATIC_URL}}js/jquery.js"></script>
+        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.raty.min.js"></script>
+        <script type="text/javascript" charset="utf-8">
+            $(document).ready(function() {
+                 $('.thingrating').each(function(index){
+                  $(this).raty({
+                    readOnly:  false,
+                    path: "{{ STATIC_URL }}images/",
+                    start: $(this).children("span:first").text(),
+                    click: function(score, evt) {
+                        var vote_url = "/rate/" + this.attr('id').substring(2) + "/" + score + "/";
+                        $.ajax({
+                          url: vote_url,
+                          success: function(){
+                            alert('vote successful');
+                          }
+                        });
+                    }
+                  });
+                });
+            });
+        </script>
 
-		<h1>{% block head %}
-			{% endblock %}
-		</h1>
-		{% block content %}
-		{% endblock %}
-	</body>
+        {% block external %}
+        {% endblock %}
+    </head>
+    <body>
+        <div id="nav">
+            <a href="/">home</a> | 
+            {% if user.is_authenticated %}
+                <a href="/save/">add bookmark</a> |
+                logged in as {{ user.username }}
+                (<a href="/accounts/logout/">logout</a>)                
+            {% else %}
+                <a href="/accounts/login/">login</a> |
+                <a href="/accounts/register/">register</a>
+            {% endif %}
+        </div>
+
+        <h1>{% block head %}
+            {% endblock %}
+        </h1>
+        {% block content %}
+        {% endblock %}
+    </body>
 </html>

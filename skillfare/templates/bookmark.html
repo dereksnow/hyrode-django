@@ -1,0 +1,26 @@
+<a href="{{ bookmark.link.url }}" class="title">
+    {{ bookmark.title }}
+</a>
+<br/>
+{% if show_tags %}
+    Tags:                   
+    {% if bookmark.tags %}
+        <ul class="tags">
+            {% for tag in bookmark.tags.all %}
+                <li><a href="/tag/{{ tag.name|urlencode }}/">
+                    {{ tag.name }}</a></li>{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        None.
+    {% endif %}
+    <br/>
+{% endif %}
+<div class="thingrating" id="t_{{ bookmark.id }}"><span style="display:none;">{{ bookmark.rating.score }}</span></div>
+<div>Rating:{{ bookmark.rating.score }}</div>
+{% if show_user %}
+    Posted by:
+    <a href="/user/{{ bookmark.user.username }}/"
+    class="username">
+    {{ bookmark.user.username }}</a>
+{% endif %}
