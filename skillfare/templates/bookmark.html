@@ -1,3 +1,4 @@
+{% load url from future %}
 <a href="{{ bookmark.link.url }}" class="title">
     {{ bookmark.title }}
 </a>
@@ -7,7 +8,8 @@
     {% if bookmark.tags %}
         <ul class="tags">
             {% for tag in bookmark.tags.all %}
-                <li><a href="/tag/{{ tag.name|urlencode }}/">
+                <li>
+                    <a href="{% url 'bookmarks.views.tag_page' tag.slug %}">
                     {{ tag.name }}</a></li>{% if not forloop.last %},{% endif %}
             {% endfor %}
         </ul>
@@ -17,10 +19,23 @@
     <br/>
 {% endif %}
 <div class="thingrating" id="t_{{ bookmark.id }}"><span style="display:none;">{{ bookmark.rating.score }}</span></div>
-<div>Rating:{{ bookmark.rating.score }}</div>
+<div class="level_vote">
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.id 'beginner' %}?next={{request.path}}">Beginner</a> |
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.id 'intermediate' %}?next={{request.path}}">Intermediate</a> |
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.id 'advanced' %}?next={{request.path}}">Advanced</a>
+</div>
+{% with bookmark.poll_set.all|first as poll %}
+    {% for choice in poll.choice_set.all %}
+        <li>{{ choice.choice }} - {{ choice.count_votes }}</li>
+    {% endfor %}
+{% endwith %}
+{% if user.is_authenticated and user.username == username %}
+    <a href="{% url 'bookmarks.views.delete_bookmark' bookmark.id %}?next={{request.path}}">delete</a>
+{% endif %}
 {% if show_user %}
     Posted by:
-    <a href="/user/{{ bookmark.user.username }}/"
+    <a href="{% url 'bookmarks.views.user_page' bookmark.user.username %}"
     class="username">
     {{ bookmark.user.username }}</a>
 {% endif %}
+

@@ -14,10 +14,14 @@ urlpatterns = patterns('',
 	# Browsing
 	url(r'^$', main_page),
 	url(r'^user/([\w.@+-]+)/$', user_page),
-	url(r'^tag/([\w\s]+)/$', tag_page),
+	url(r'^tag/([-\w]+)/$', tag_page),
+    url(r'^delete/(?P<pk>\d+)/$', delete_bookmark), 
 
 	url(regex=r'^(?P<pk>\d+)/$', view=BookmarkDetailView.as_view(), 
 		name='detail'),
+
+    #Learn Level Voting
+    url(r'^level_vote/(?P<pk>\d+)/(?P<level>[-\w]+)/$', level_vote),
 
     # Ratings
     url(r'^rate/(?P<object_id>\d+)/(?P<score>\d+)/', AddRatingFromModel(), {
