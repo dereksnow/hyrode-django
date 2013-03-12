@@ -46,7 +46,8 @@ urlpatterns = patterns('',
 	url(r'^accounts/', include('registration.urls')),
 
 	# Account management
-	url(r'^save/$', bookmark_save_page),
+	url(r'^save/link/$', bookmark_save_link),
+    url(r'^save/bookmark/$', bookmark_save),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

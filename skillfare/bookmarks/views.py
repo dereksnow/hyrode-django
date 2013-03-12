@@ -1,9 +1,11 @@
-# Create your views here.
+import urllib
+from bs4 import BeautifulSoup
+
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
 from bookmarks.models import Bookmark, Link, Poll, Choice, Vote
-from bookmarks.forms import BookmarkSaveForm
+from bookmarks.forms import BookmarkSaveForm, LinkSaveForm
 from django.contrib.auth.decorators import login_required
 from taggit.models import Tag
 from django.views.generic import DetailView
@@ -19,14 +21,24 @@ def main_page(request):
     return render(request, 'main_page.html', variables)
 
 def user_page(request, username):
-    user = get_object_or_404(User, username=username)
-    bookmarks = user.bookmark_set.order_by('-id')
-    variables = {
-        'username': username, 
-        'bookmarks': bookmarks, 
-        'show_tags': True
-    }
-    return render(request, 'user_page.html', variables)
+    if request.method == 'POST' and request.user.username == username:
+        # Is Validation needed?? Investigate
+        deletelist = request.POST.getlist('deletelist')
+        deletelist = [int(i) for i in deletelist if i.isdigit()] 
+        Bookmark.objects.filter(user=request.user,id__in=deletelist).delete()
+        return HttpResponseRedirect('/user/%s/' % request.user.username)    
+    else:
+        show_edit = request.REQUEST.get('show_edit', False) and request.user.username == username
+        user = get_object_or_404(User, username=username)
+        bookmarks = user.bookmark_set.order_by('-id')
+        variables = {
+            'username': username, 
+            'bookmarks': bookmarks, 
+            'show_tags': True,
+            'show_edit': show_edit
+        }
+        return render(request, 'user_page.html', variables)
+
 
 def delete_bookmark(request, pk):
     redirect_to = request.REQUEST.get('next', '')
@@ -75,17 +87,43 @@ def get_ip(request):
 
 
 @login_required
-def bookmark_save_page(request):
+def bookmark_save_link(request):
+    if request.method == 'POST':
+        form = LinkSaveForm(request.POST)
+        if form.is_valid():
+            # Create or get link.
+            link, dummy = Link.objects.get_or_create(
+                url = form.cleaned_data['url']
+            )
+
+            request.session['link'] = link
+
+            return HttpResponseRedirect('/save/bookmark/')        
+    else:
+        form = LinkSaveForm()
+    variables = {'form': form}
+    return render(request, 'bookmark_save_link.html', variables)
+
+
+@login_required
+def bookmark_save(request):
     if request.method == 'POST':
         form = BookmarkSaveForm(request.POST)
         if form.is_valid():
             # Create or get link.
-            link, dummy = Link.objects.get_or_create(
-                url=form.cleaned_data['url'])
+            # link, dummy = Link.objects.get_or_create(
+            #     url=form.cleaned_data['url']
+            # )
+            # Create or get bookmark.
+            # bookmark, created = Bookmark.objects.get_or_create(
+            #     user=request.user, 
+            #     link=link
+            # )
+
             # Create or get bookmark.
             bookmark, created = Bookmark.objects.get_or_create(
                 user=request.user, 
-                link=link
+                link=request.session.get('link', None)
             )
 
             #Update bookmark title. 
@@ -114,7 +152,13 @@ def bookmark_save_page(request):
             
             return HttpResponseRedirect('/user/%s/' % request.user.username)
     else:
-        form = BookmarkSaveForm()
+        link = request.session.get('link', None)
+        if link:
+            soup = BeautifulSoup(urllib.urlopen(link.url), "lxml")
+            data = {'title': soup.title.string}
+        else:
+            data = {}
+        form = BookmarkSaveForm(initial=data)
     variables = {'form': form}
     return render(request, 'bookmark_save.html', variables)
 
@@ -132,4 +176,7 @@ def tag_page(request, tag_slug):
     variables = {'bookmarks': bookmarks, 'tag_name': tag.name,
                     'show_tags': True, 'show_user': True}
     return render(request, 'tag_page.html', variables)
+
+
+
 

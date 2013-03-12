@@ -29,13 +29,16 @@
         <li>{{ choice.choice }} - {{ choice.count_votes }}</li>
     {% endfor %}
 {% endwith %}
-{% if user.is_authenticated and user.username == username %}
+<!-- {% if user.is_authenticated and user.username == username %}
     <a href="{% url 'bookmarks.views.delete_bookmark' bookmark.id %}?next={{request.path}}">delete</a>
-{% endif %}
+{% endif %} -->
 {% if show_user %}
     Posted by:
     <a href="{% url 'bookmarks.views.user_page' bookmark.user.username %}"
     class="username">
     {{ bookmark.user.username }}</a>
+{% endif %}
+{% if show_edit %}
+    delete <input type="checkbox" name="deletelist" value="{{bookmark.id}}">
 {% endif %}
 
