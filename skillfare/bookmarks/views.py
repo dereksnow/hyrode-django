@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from bookmarks.models import Bookmark, Link, Poll, Choice, Vote
 from bookmarks.forms import BookmarkSaveForm, LinkSaveForm
 from django.contrib.auth.decorators import login_required
+from django.core.urlresolvers import reverse
 from taggit.models import Tag
 from django.views.generic import DetailView
 from bookmarks.models import Bookmark
@@ -26,7 +27,8 @@ def user_page(request, username):
         deletelist = request.POST.getlist('deletelist')
         deletelist = [int(i) for i in deletelist if i.isdigit()] 
         Bookmark.objects.filter(user=request.user,id__in=deletelist).delete()
-        return HttpResponseRedirect('/user/%s/' % request.user.username)    
+        #return HttpResponseRedirect('/user/%s/' % request.user.username)    
+        return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))    
     else:
         show_edit = request.REQUEST.get('show_edit', False) and request.user.username == username
         user = get_object_or_404(User, username=username)
@@ -50,10 +52,10 @@ def delete_bookmark(request, pk):
 def level_vote(request, pk, level):
     redirect_to = request.REQUEST.get('next', '')
     
-    bookmark = get_object_or_404(Bookmark, pk=pk)
+    link = get_object_or_404(Link, pk=pk)
     poll, created = Poll.objects.get_or_create(
         question="Learning Level Poll", 
-        bookmark=bookmark
+        link=link
     )
 
     choice, created = Choice.objects.get_or_create(
@@ -92,13 +94,24 @@ def bookmark_save_link(request):
         form = LinkSaveForm(request.POST)
         if form.is_valid():
             # Create or get link.
-            link, dummy = Link.objects.get_or_create(
+            link, link_created = Link.objects.get_or_create(
                 url = form.cleaned_data['url']
             )
 
+            # Create poll for learning level.
+            poll, poll_created = Poll.objects.get_or_create(
+                question = "Learning Level Poll",
+                link = link
+            )
+
+            # Create choices for learning level poll.
+            beginner_choice, beginner_choice_created = Choice.objects.get_or_create(poll=poll, choice='beginner', pos=0)
+            intermediate_choice, intermediate_choice_created = Choice.objects.get_or_create(poll=poll, choice='intermediate', pos=1)
+            advanced_choice, advanced_choice_created = Choice.objects.get_or_create(poll=poll, choice='advanced', pos=2)             
+
             request.session['link'] = link
 
-            return HttpResponseRedirect('/save/bookmark/')        
+            return HttpResponseRedirect(reverse(bookmark_save))        
     else:
         form = LinkSaveForm()
     variables = {'form': form}
@@ -129,19 +142,11 @@ def bookmark_save(request):
             #Update bookmark title. 
             bookmark.title = form.cleaned_data['title']
 
+            bookmark.private = form.cleaned_data['private']
+
             # Save bookmark to database.
-            bookmark.save()
-
-            # Create poll for learning level.
-            poll = Poll.objects.create(
-                question = "Learning Level Poll",
-                bookmark = bookmark
-            )
-
-            # Create choices for learning level poll.
-            beginner_choice = Choice.objects.create(poll=poll, choice='beginner', pos=0)
-            intermediate_choice = Choice.objects.create(poll=poll, choice='intermediate', pos=1)
-            advanced_choice = Choice.objects.create(poll=poll, choice='advanced', pos=2)         
+            #bookmark.save()
+        
 
             # Using django-taggit tags added after bookmark is saved
             # Get tags from form
@@ -150,7 +155,8 @@ def bookmark_save(request):
             for tag in tags:
                 bookmark.tags.add(tag)
             
-            return HttpResponseRedirect('/user/%s/' % request.user.username)
+            #return HttpResponseRedirect('/user/%s/' % request.user.username)
+            return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))
     else:
         link = request.session.get('link', None)
         if link:

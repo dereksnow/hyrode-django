@@ -18,13 +18,14 @@
     {% endif %}
     <br/>
 {% endif %}
-<div class="thingrating" id="t_{{ bookmark.id }}"><span style="display:none;">{{ bookmark.rating.score }}</span></div>
+<div class="thingrating" id="{{ bookmark.link.id }}"><span style="display:none;">{{ bookmark.link.rating.get_rating }}</span></div>
+<div>{{ bookmark.link.rating.get_rating }}</span></div>
 <div class="level_vote">
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.id 'beginner' %}?next={{request.path}}">Beginner</a> |
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.id 'intermediate' %}?next={{request.path}}">Intermediate</a> |
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.id 'advanced' %}?next={{request.path}}">Advanced</a>
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'beginner' %}?next={{request.path}}">Beginner</a> |
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'intermediate' %}?next={{request.path}}">Intermediate</a> |
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'advanced' %}?next={{request.path}}">Advanced</a>
 </div>
-{% with bookmark.poll_set.all|first as poll %}
+{% with bookmark.link.poll_set.all|first as poll %}
     {% for choice in poll.choice_set.all %}
         <li>{{ choice.choice }} - {{ choice.count_votes }}</li>
     {% endfor %}

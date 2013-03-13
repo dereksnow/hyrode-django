@@ -26,7 +26,7 @@ urlpatterns = patterns('',
     # Ratings
     url(r'^rate/(?P<object_id>\d+)/(?P<score>\d+)/', AddRatingFromModel(), {
         'app_label': 'bookmarks',
-        'model': 'bookmark',
+        'model': 'link',
         'field_name': 'rating',
     }),    
 

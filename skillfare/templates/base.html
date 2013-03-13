@@ -16,16 +16,16 @@
             });
         }); 
         </script> -->
-        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.raty.min.js"></script>
+        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.raty.js"></script>
         <script type="text/javascript" charset="utf-8">
             $(document).ready(function() {
                  $('.thingrating').each(function(index){
                   $(this).raty({
                     readOnly:  false,
                     path: "{{ STATIC_URL }}images/",
-                    start: $(this).children("span:first").text(),
+                    score: $(this).children("span:first").text(),
                     click: function(score, evt) {
-                        var vote_url = "/rate/" + this.attr('id').substring(2) + "/" + score + "/";
+                        var vote_url = "/rate/" + $(this).attr('id') + "/" + score + "/";
                         $.ajax({
                           url: vote_url,
                           success: function(){

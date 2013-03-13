@@ -9,6 +9,7 @@ from djangoratings.fields import RatingField
 
 class Link(TimeStampedModel):
     url = models.URLField(unique=True)
+    rating = RatingField(range=5, can_change_vote=True)
 
     def __unicode__(self):
         return self.url
@@ -17,18 +18,17 @@ class Bookmark(TimeStampedModel):
     title = models.CharField(max_length=200)
     user = models.ForeignKey(User)
     link = models.ForeignKey(Link)
+    # private = models.BooleanField(default=False)
     tags = TaggableManager()
-    rating = RatingField(range=5, can_change_vote=True)
     
     def __unicode__(self):
-        return u' %s, %s, %s, %s, %s' % (self.title, self.user.username, 
-            self.link.url, self.created, self.rating.score)
+        return u' %s, %s, %s, %s' % (self.title, self.user.username, 
+            self.link.url, self.created)
 
 class Poll(TimeStampedModel):
     question = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    bookmark = models.ForeignKey(Bookmark)
-
+    link = models.ForeignKey(Link)
 
     def count_choices(self):
         return self.choice_set.count()
