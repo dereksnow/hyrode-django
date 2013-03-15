@@ -2,6 +2,12 @@
     <ul id="bookmarks">
         {% if show_edit %}
             <form action="." method="post">{% csrf_token %}
+                <select name="operation">
+                    <option value=''>--------------------</option>                    
+                    <option value="delete">Delete</option>
+                    <option value="private">Make Private</option>
+                    <option value="public">Make Public</option>
+                </select>                  
         {% endif %}
                 {% for bookmark in bookmarks %}
                     <li>

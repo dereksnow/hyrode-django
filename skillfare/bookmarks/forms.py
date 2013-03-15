@@ -6,8 +6,8 @@ class BookmarkSaveForm(forms.Form):
 	# 	widget=forms.TextInput(attrs={'size': 64}))
 	title = forms.CharField(label=u'Title', 
 		widget=forms.TextInput(attrs={'size':64}))
-	# private = forms.BooleanField(label=u'Keep Private',
-	# 	required=False)
+	private = forms.BooleanField(label=u'Private Bookmark',
+		required=False)
 	tags = TagField(label=u'Tags',
 		required=False,
 		widget=forms.TextInput(attrs={'size': 64}))

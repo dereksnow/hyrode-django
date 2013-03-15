@@ -24,10 +24,24 @@ def main_page(request):
 def user_page(request, username):
     if request.method == 'POST' and request.user.username == username:
         # Is Validation needed?? Investigate
-        deletelist = request.POST.getlist('deletelist')
-        deletelist = [int(i) for i in deletelist if i.isdigit()] 
-        Bookmark.objects.filter(user=request.user,id__in=deletelist).delete()
-        #return HttpResponseRedirect('/user/%s/' % request.user.username)    
+        operation = request.POST.get('operation', None)
+        if operation:
+            editlist = request.POST.getlist('editlist')
+            editlist = [int(i) for i in editlist if i.isdigit()] 
+            bookmarklist = Bookmark.objects.filter(user=request.user,id__in=editlist)
+            
+            if operation == 'delete':
+                bookmarklist.delete()
+            elif operation == 'private':
+                for bookmark in bookmarklist:
+                    bookmark.private = True
+                    bookmark.save()
+            elif operation == 'public':
+                for bookmark in bookmarklist:
+                    bookmark.private = False
+                    bookmark.save()
+
+            #return HttpResponseRedirect('/user/%s/' % request.user.username)    
         return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))    
     else:
         show_edit = request.REQUEST.get('show_edit', False) and request.user.username == username
@@ -65,12 +79,11 @@ def level_vote(request, pk, level):
 
     ip = get_ip(request)
 
-    if Vote.objects.filter(ip=ip).count() < 5:
+    if Vote.objects.filter(poll=poll, ip=ip).count() < 5:
         try:        
             Vote.objects.get(user = request.user, poll = poll)
         except Vote.DoesNotExist:
             Vote.objects.create(user = request.user, choice=choice, poll=poll, ip=ip)
-
 
     return HttpResponseRedirect(redirect_to)
 
@@ -145,7 +158,7 @@ def bookmark_save(request):
             bookmark.private = form.cleaned_data['private']
 
             # Save bookmark to database.
-            #bookmark.save()
+            bookmark.save()
         
 
             # Using django-taggit tags added after bookmark is saved

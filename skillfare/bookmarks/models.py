@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from model_utils.models import TimeStampedModel
 from taggit.managers import TaggableManager
 from djangoratings.fields import RatingField
+from django.utils.text import slugify
 
 # TimeStampedModel provides an automatic created and 
 # modified field to all models that inherit from it.
@@ -18,12 +19,23 @@ class Bookmark(TimeStampedModel):
     title = models.CharField(max_length=200)
     user = models.ForeignKey(User)
     link = models.ForeignKey(Link)
-    # private = models.BooleanField(default=False)
+    private = models.BooleanField(default=False)
+#    slug = models.SlugField(max_length=255, blank=True, default='')
     tags = TaggableManager()
     
     def __unicode__(self):
         return u' %s, %s, %s, %s' % (self.title, self.user.username, 
             self.link.url, self.created)
+
+    # def save(self, *args, **kwargs):
+    #     # check if newly created
+    #     if not self.id:
+    #         # newly created, so set slug value
+    #         self.slug = slugify(self.title)
+    #     super(Bookmark, self).save(*args, **kwargs)
+
+    # def get_absolute_url(self):
+    #     return reverse(bookmarks:detail, args=[str(self.id), self.slug])
 
 class Poll(TimeStampedModel):
     question = models.CharField(max_length=255)

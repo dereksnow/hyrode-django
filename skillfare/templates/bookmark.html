@@ -30,6 +30,7 @@
         <li>{{ choice.choice }} - {{ choice.count_votes }}</li>
     {% endfor %}
 {% endwith %}
+private bookmark {{bookmark.private}}
 <!-- {% if user.is_authenticated and user.username == username %}
     <a href="{% url 'bookmarks.views.delete_bookmark' bookmark.id %}?next={{request.path}}">delete</a>
 {% endif %} -->
@@ -40,6 +41,7 @@
     {{ bookmark.user.username }}</a>
 {% endif %}
 {% if show_edit %}
-    delete <input type="checkbox" name="deletelist" value="{{bookmark.id}}">
+    private bookmark {{bookmark.private}}
+    delete <input type="checkbox" name="editlist" value="{{bookmark.id}}">
 {% endif %}
 
