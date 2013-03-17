@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load url from future %}
 {% block user %}
     {% if user.is_authenticated and user.username == username %}
         <a href="{% url 'bookmarks.views.user_page' user.username %}?show_edit=True">edit</a> |

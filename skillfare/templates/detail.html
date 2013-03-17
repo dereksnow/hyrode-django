@@ -6,7 +6,8 @@
     {{ bookmark.title }}
 {% endblock %}
 {% block content %}
-    <a href="{{ bookmark.link.url }}" class="title">
+{% include "bookmark.html" %}
+<!--     <a href="{{ bookmark.link.url }}" class="title">
         {{ bookmark.title }}
     </a>
     <br/>    
@@ -21,5 +22,5 @@
                 {% if not forloop.last %},{% endif %}
             {% endfor %}
         </ul>
-    {% endif %}
+    {% endif %} -->
 {% endblock %}

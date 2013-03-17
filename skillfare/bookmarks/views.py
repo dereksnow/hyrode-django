@@ -13,9 +13,12 @@ from django.views.generic import DetailView
 from bookmarks.models import Bookmark
 
 
-class BookmarkDetailView(DetailView):
-    model = Bookmark
-    template_name = 'detail.html'
+def bookmark_detail(request, pk, slug=''):
+    bookmark = get_object_or_404(Bookmark, pk=pk)
+    if bookmark.slug != slug:
+        return HttpResponseRedirect(reverse(bookmark_detail, args=[pk, bookmark.slug]))
+    variables = {'bookmark': bookmark}
+    return render(request, 'detail.html', variables)
 
 def main_page(request):
     variables = {'user': request.user}

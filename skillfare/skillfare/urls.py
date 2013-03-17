@@ -17,7 +17,7 @@ urlpatterns = patterns('',
 	url(r'^tag/([-\w]+)/$', tag_page),
     url(r'^delete/(?P<pk>\d+)/$', delete_bookmark), 
 
-	url(regex=r'^(?P<pk>\d+)/$', view=BookmarkDetailView.as_view(), 
+	url(regex=r'^detail/(?P<pk>\d+)/(?P<slug>[-\w]*)/?$', view=bookmark_detail, 
 		name='detail'),
 
     #Learn Level Voting
