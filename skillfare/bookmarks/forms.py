@@ -1,16 +1,28 @@
 from django import forms
+from bookmarks.models import Feature
 from taggit.forms import TagField
 
 class BookmarkSaveForm(forms.Form):
 	# url = forms.URLField(label=u'URL', 
 	# 	widget=forms.TextInput(attrs={'size': 64}))
-	title = forms.CharField(label=u'Title', 
-		widget=forms.TextInput(attrs={'size':64}))
-	private = forms.BooleanField(label=u'Private Bookmark',
-		required=False)
-	tags = TagField(label=u'Tags',
+	title = forms.CharField(
+		label=u'Title', 
+		widget=forms.TextInput(attrs={'size':64})
+	)
+	private = forms.BooleanField(
+		label=u'Private Bookmark',
+		required=False
+	)
+	tags = TagField(
+		label=u'Tags',
 		required=False,
-		widget=forms.TextInput(attrs={'size': 64}))
+		widget=forms.TextInput(attrs={'size': 64})
+	)
+	features = forms.ModelMultipleChoiceField(
+		queryset=Feature.objects.all(), 
+		required=False, 
+		widget=forms.CheckboxSelectMultiple
+	)
 
 
 	def clean_tags(self):

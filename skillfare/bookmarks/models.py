@@ -15,12 +15,22 @@ class Link(TimeStampedModel):
     def __unicode__(self):
         return self.url
 
+class Feature(TimeStampedModel):
+    description = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return u'%s' % (self.description)
+
+    class Meta:
+        ordering = ['description']        
+
 class Bookmark(TimeStampedModel):
     title = models.CharField(max_length=200)
     user = models.ForeignKey(User)
     link = models.ForeignKey(Link)
     private = models.BooleanField(default=False)
     slug = models.SlugField(max_length=255, blank=True, default='')
+    features = models.ManyToManyField(Feature)
     tags = TaggableManager()
     
     def __unicode__(self):

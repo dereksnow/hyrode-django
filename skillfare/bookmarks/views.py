@@ -1,5 +1,7 @@
 import urllib
 from bs4 import BeautifulSoup
+# from selenium import webdriver
+# from selenium.webdriver.common.keys import Keys
 
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
@@ -66,23 +68,31 @@ def delete_bookmark(request, pk):
     return HttpResponseRedirect(redirect_to)
 
 @login_required
+def spam_report(request, pk):
+    link = get_object_or_404(Link, pk=pk)
+    poll, created = Poll.objects.get_or_create(
+        question = "Link Spam",
+        link = link
+    )
+
+@login_required
 def level_vote(request, pk, level):
     redirect_to = request.REQUEST.get('next', '')
     
     link = get_object_or_404(Link, pk=pk)
     poll, created = Poll.objects.get_or_create(
-        question="Learning Level Poll", 
-        link=link
+        question = "Learning Level Poll", 
+        link = link
     )
 
     choice, created = Choice.objects.get_or_create(
-        poll=poll, 
-        choice=level
+        poll = poll, 
+        choice = level
     )  
 
     ip = get_ip(request)
 
-    if Vote.objects.filter(poll=poll, ip=ip).count() < 5:
+    if Vote.objects.filter(poll = poll, ip=ip).count() < 5:
         try:        
             Vote.objects.get(user = request.user, poll = poll)
         except Vote.DoesNotExist:
@@ -162,6 +172,13 @@ def bookmark_save(request):
 
             # Save bookmark to database.
             bookmark.save()
+
+            # Get features from form
+            features = form.cleaned_data['features']
+
+            # Add features to bookmark
+            for feature in features:
+                bookmark.features.add(feature)
         
 
             # Using django-taggit tags added after bookmark is saved
@@ -176,6 +193,10 @@ def bookmark_save(request):
     else:
         link = request.session.get('link', None)
         if link:
+            # driver = webdriver.Firefox()
+            # driver.get(link.url)
+            # title = driver.title
+            # data = {'title': title}
             soup = BeautifulSoup(urllib.urlopen(link.url), "lxml")
             data = {'title': soup.title.string}
         else:
