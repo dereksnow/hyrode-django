@@ -8,9 +8,26 @@ from django.utils.text import slugify
 # TimeStampedModel provides an automatic created and 
 # modified field to all models that inherit from it.
 
+class Poll(TimeStampedModel):
+    question = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    def __unicode__(self):
+        return self.question
+
+    def count_choices(self):
+        return self.choice_set.count()
+
+    def count_total_votes(self):
+        result = 0
+        for choice in self.choice_set.all():
+            result += choice.count_votes()
+        return result
+
 class Link(TimeStampedModel):
     url = models.URLField(unique=True)
     rating = RatingField(range=5, can_change_vote=True)
+    learn_level_poll = models.OneToOneField(Poll)
 
     def __unicode__(self):
         return self.url
@@ -47,22 +64,6 @@ class Bookmark(TimeStampedModel):
     def get_absolute_url(self):
         return reverse('detail', args=[str(self.id), self.slug])
 
-class Poll(TimeStampedModel):
-    question = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    link = models.ForeignKey(Link)
-
-    def __unicode__(self):
-        return self.question
-
-    def count_choices(self):
-        return self.choice_set.count()
-
-    def count_total_votes(self):
-        result = 0
-        for choice in self.choice_set.all():
-            result += choice.count_votes()
-        return result
 
 class Choice(TimeStampedModel):
     poll = models.ForeignKey(Poll)

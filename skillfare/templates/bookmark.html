@@ -28,11 +28,11 @@
     <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'advanced' %}?next={{request.path}}">Advanced</a>
 </div>
 
-{% with bookmark.link.poll_set.all|first as poll %}
-    {% for choice in poll.choice_set.all %}
-        <li>{{ choice.choice }} - {{ choice.count_votes }}</li>
-    {% endfor %}
-{% endwith %}
+
+{% for choice in bookmark.link.learn_level_poll.choice_set.all %}
+    <li>{{ choice.choice }} - {{ choice.count_votes }}</li>
+{% endfor %}
+
 private bookmark {{bookmark.private}}
 <!-- {% if user.is_authenticated and user.username == username %}
     <a href="{% url 'bookmarks.views.delete_bookmark' bookmark.id %}?next={{request.path}}">delete</a>

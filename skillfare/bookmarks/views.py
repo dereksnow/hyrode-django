@@ -67,36 +67,25 @@ def delete_bookmark(request, pk):
     bookmark.delete()
     return HttpResponseRedirect(redirect_to)
 
-@login_required
-def spam_report(request, pk):
-    link = get_object_or_404(Link, pk=pk)
-    poll, created = Poll.objects.get_or_create(
-        question = "Link Spam",
-        link = link
-    )
 
 @login_required
 def level_vote(request, pk, level):
     redirect_to = request.REQUEST.get('next', '')
     
     link = get_object_or_404(Link, pk=pk)
-    poll, created = Poll.objects.get_or_create(
-        question = "Learning Level Poll", 
-        link = link
-    )
 
     choice, created = Choice.objects.get_or_create(
-        poll = poll, 
+        poll = link.learn_level_poll, 
         choice = level
     )  
 
     ip = get_ip(request)
 
-    if Vote.objects.filter(poll = poll, ip=ip).count() < 5:
+    if Vote.objects.filter(poll = link.learn_level_poll, ip=ip).count() < 5:
         try:        
-            Vote.objects.get(user = request.user, poll = poll)
+            Vote.objects.get(user = request.user, poll = link.learn_level_poll)
         except Vote.DoesNotExist:
-            Vote.objects.create(user = request.user, choice=choice, poll=poll, ip=ip)
+            Vote.objects.create(user = request.user, choice=choice, poll = link.learn_level_poll, ip=ip)
 
     return HttpResponseRedirect(redirect_to)
 
@@ -119,21 +108,22 @@ def bookmark_save_link(request):
     if request.method == 'POST':
         form = LinkSaveForm(request.POST)
         if form.is_valid():
-            # Create or get link.
-            link, link_created = Link.objects.get_or_create(
-                url = form.cleaned_data['url']
-            )
 
             # Create poll for learning level.
             poll, poll_created = Poll.objects.get_or_create(
-                question = "Learning Level Poll",
-                link = link
+                question = "Learning Level Poll"
+            )
+
+            # Create or get link.
+            link, link_created = Link.objects.get_or_create(
+                url = form.cleaned_data['url'],
+                learn_level_poll = poll
             )
 
             # Create choices for learning level poll.
-            beginner_choice, beginner_choice_created = Choice.objects.get_or_create(poll=poll, choice='beginner', pos=0)
-            intermediate_choice, intermediate_choice_created = Choice.objects.get_or_create(poll=poll, choice='intermediate', pos=1)
-            advanced_choice, advanced_choice_created = Choice.objects.get_or_create(poll=poll, choice='advanced', pos=2)             
+            beginner_choice, beginner_choice_created = Choice.objects.get_or_create(poll = poll, choice = 'beginner', pos=0)
+            intermediate_choice, intermediate_choice_created = Choice.objects.get_or_create(poll = poll, choice = 'intermediate', pos=1)
+            advanced_choice, advanced_choice_created = Choice.objects.get_or_create(poll = poll, choice = 'advanced', pos=2)             
 
             request.session['link'] = link
 
