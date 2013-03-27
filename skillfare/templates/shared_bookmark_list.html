@@ -1,0 +1,12 @@
+{% if shared_bookmarks %}
+    <ul id="bookmarks">
+    {% for shared_bookmark in shared_bookmarks %}
+        <li>
+            {% include "shared_bookmark.html" %}
+        </li>
+        <hr/>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No bookmarks found.</p>
+{% endif %}

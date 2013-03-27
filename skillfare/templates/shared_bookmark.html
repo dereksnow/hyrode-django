@@ -1,0 +1,57 @@
+Hot Score: {{ shared_bookmark.hot_score}}
+<br/>
+<a href="{% url 'bookmarks.views.interest_vote' shared_bookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/thumbsup.png" alt="Like" title="Like"/></a>
+Interest: {{ shared_bookmark.interest_poll.count_votes }}
+<br/>
+<a href="{% url 'bookmarks.views.report_abuse_vote' shared_bookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/flag.png" alt="Report Abuse" title="Report Abuse"/></a> Abuse: {{ shared_bookmark.report_abuse_poll.count_votes }}
+<br/>
+<a href="{{ shared_bookmark.bookmark.link.url }}" class="title">
+    {{ shared_bookmark.bookmark.title }}
+</a>
+<br/>
+{% if show_tags %}
+    Tags:                   
+    {% if shared_bookmark.bookmark.tags %}
+        <ul class="tags">
+            {% for tag in shared_bookmark.bookmark.tags.all %}
+                <li>
+                    <a href="{% url 'bookmarks.views.tag_page' tag.slug %}">
+                    {{ tag.name }}</a></li>{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        None.
+    {% endif %}
+    <br/>
+{% endif %}
+{% for feature in shared_bookmark.bookmark.features.all %}
+    <img src="{{ STATIC_URL }}images/features/{{feature.description}}.png" alt="{{feature.description}}" title="{{feature.description}}"/>
+{% endfor %}
+<div class="thingrating" id="{{ shared_bookmark.bookmark.link.id }}"><span style="display:none;">{{ shared_bookmark.bookmark.link.rating.get_rating }}</span></div>
+<div>{{ shared_bookmark.bookmark.link.rating.get_rating }}</span></div>
+<div class="level_vote">
+    <a href="{% url 'bookmarks.views.level_vote' shared_bookmark.bookmark.link.id 'beginner' %}?next={{request.path}}">Beginner</a> |
+    <a href="{% url 'bookmarks.views.level_vote' shared_bookmark.bookmark.link.id 'intermediate' %}?next={{request.path}}">Intermediate</a> |
+    <a href="{% url 'bookmarks.views.level_vote' shared_bookmark.bookmark.link.id 'advanced' %}?next={{request.path}}">Advanced</a>
+</div>
+
+
+{% for choice in shared_bookmark.bookmark.link.learn_level_poll.choice_set.all %}
+    <li>{{ choice.choice }} - {{ choice.count_votes }}</li>
+{% endfor %}
+
+private bookmark {{shared_bookmark.bookmark.private}}
+<!-- {% if user.is_authenticated and user.username == username %}
+    <a href="{% url 'bookmarks.views.delete_bookmark' bookmark.id %}?next={{request.path}}">delete</a>
+{% endif %} -->
+{% if show_user %}
+    Posted by:
+    <a href="{% url 'bookmarks.views.user_page' shared_bookmark.bookmark.user.username %}"
+    class="username">
+    {{ shared_bookmark.bookmark.user.username }}</a>
+{% endif %}
+{% if show_edit %}
+    private bookmark {{shared_bookmark.bookmark.private}}
+    delete <input type="checkbox" name="editlist" value="{{bookmark.id}}">
+{% endif %}
+

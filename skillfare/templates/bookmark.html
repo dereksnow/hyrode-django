@@ -18,7 +18,7 @@
     <br/>
 {% endif %}
 {% for feature in bookmark.features.all %}
-    <img src="{{ STATIC_URL }}images/features/{{feature.description}}.png" alt="{{feature.description}}"/>
+    <img src="{{ STATIC_URL }}images/features/{{feature.description}}.png" alt="{{feature.description}}" title="{{feature.description}}"/>
 {% endfor %}
 <div class="thingrating" id="{{ bookmark.link.id }}"><span style="display:none;">{{ bookmark.link.rating.get_rating }}</span></div>
 <div>{{ bookmark.link.rating.get_rating }}</span></div>

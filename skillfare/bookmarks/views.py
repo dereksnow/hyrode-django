@@ -6,24 +6,37 @@ from bs4 import BeautifulSoup
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
-from bookmarks.models import Bookmark, Link, Poll, Choice, Vote
+from bookmarks.models import Bookmark, Link, MultiChoicePoll, SingleChoicePoll, Choice, SingleChoiceVote, MultiChoiceVote
 from bookmarks.forms import BookmarkSaveForm, LinkSaveForm
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from taggit.models import Tag
 from django.views.generic import DetailView
-from bookmarks.models import Bookmark
+from bookmarks.models import Bookmark, SharedBookmark
 
 
-def bookmark_detail(request, pk, slug=''):
-    bookmark = get_object_or_404(Bookmark, pk=pk)
+def bookmark_detail(request, pk, slug = ''):
+    bookmark = get_object_or_404(Bookmark, pk = pk)
     if bookmark.slug != slug:
         return HttpResponseRedirect(reverse(bookmark_detail, args=[pk, bookmark.slug]))
     variables = {'bookmark': bookmark}
     return render(request, 'detail.html', variables)
 
+def shared_bookmark_detail(request, pk, slug = ''):
+    shared_bookmark = get_object_or_404(SharedBookmark, pk = pk)
+    if shared_bookmark.slug != slug:
+        return HttpResponseRedirect(
+            reverse(shared_bookmark_detail, args=[pk, shared_bookmark.slug])
+        )
+    variables = {'bookmark': shared_bookmark}
+    return render(request, 'detail.html', variables)
+
 def main_page(request):
-    variables = {'user': request.user}
+    shared_bookmarks = SharedBookmark.objects.order_by('-hot_score')[:20]
+    variables = {
+        'shared_bookmarks': shared_bookmarks,
+        'show_tags': True
+        }
     return render(request, 'main_page.html', variables)
 
 def user_page(request, username):
@@ -69,6 +82,50 @@ def delete_bookmark(request, pk):
 
 
 @login_required
+def interest_vote(request, pk):
+    redirect_to = request.REQUEST.get('next', '')
+
+    shared_bookmark = get_object_or_404(SharedBookmark, pk=pk)
+
+    ip = get_ip(request)
+
+    if SingleChoiceVote.objects.filter(poll = shared_bookmark.interest_poll, ip = ip).count() <= 5:
+        
+        try:
+            SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.interest_poll)
+        
+        except SingleChoiceVote.DoesNotExist:
+            SingleChoiceVote.objects.create(user = request.user, poll = shared_bookmark.interest_poll, ip = ip)
+
+    return HttpResponseRedirect(redirect_to)
+
+
+@login_required
+def report_abuse_vote(request, pk):
+    redirect_to = request.REQUEST.get('next', '')
+
+    shared_bookmark = get_object_or_404(SharedBookmark, pk=pk)
+
+    ip = get_ip(request)
+
+    if SingleChoiceVote.objects.filter(poll = shared_bookmark.report_abuse_poll, ip = ip).count() <= 5:
+        
+        try:
+            SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.report_abuse_poll)
+        except SingleChoiceVote.DoesNotExist:
+            if shared_bookmark.report_abuse_poll.count_votes() < 5:
+                SingleChoiceVote.objects.create(user = request.user, poll = shared_bookmark.report_abuse_poll, ip = ip)
+            else :
+                shared_bookmark.bookmark.delete()
+                shared_bookmark.delete()
+                
+            
+    return HttpResponseRedirect(redirect_to)
+
+
+
+
+@login_required
 def level_vote(request, pk, level):
     redirect_to = request.REQUEST.get('next', '')
     
@@ -81,11 +138,13 @@ def level_vote(request, pk, level):
 
     ip = get_ip(request)
 
-    if Vote.objects.filter(poll = link.learn_level_poll, ip=ip).count() < 5:
+    if MultiChoiceVote.objects.filter(poll = link.learn_level_poll, ip=ip).count() <= 5:
+        
         try:        
-            Vote.objects.get(user = request.user, poll = link.learn_level_poll)
-        except Vote.DoesNotExist:
-            Vote.objects.create(user = request.user, choice=choice, poll = link.learn_level_poll, ip=ip)
+            MultiChoiceVote.objects.get(user = request.user, poll = link.learn_level_poll)
+        except MultiChoiceVote.DoesNotExist:
+            MultiChoiceVote.objects.create(user = request.user, choice=choice, poll = link.learn_level_poll, ip=ip)
+
 
     return HttpResponseRedirect(redirect_to)
 
@@ -109,21 +168,27 @@ def bookmark_save_link(request):
         form = LinkSaveForm(request.POST)
         if form.is_valid():
 
-            # Create poll for learning level.
-            poll, poll_created = Poll.objects.get_or_create(
-                question = "Learning Level Poll"
-            )
+            # get or create link.
+            # Did not use get_or_create since a poll is needed to
+            # create Link object. 
+            try:
+                link = Link.objects.get(url = form.cleaned_data['url'])
+            except Link.DoesNotExist:
 
-            # Create or get link.
-            link, link_created = Link.objects.get_or_create(
-                url = form.cleaned_data['url'],
-                learn_level_poll = poll
-            )
+                poll = MultiChoicePoll.objects.create(
+                    question = "Learning Level Poll"
+                )
 
-            # Create choices for learning level poll.
-            beginner_choice, beginner_choice_created = Choice.objects.get_or_create(poll = poll, choice = 'beginner', pos=0)
-            intermediate_choice, intermediate_choice_created = Choice.objects.get_or_create(poll = poll, choice = 'intermediate', pos=1)
-            advanced_choice, advanced_choice_created = Choice.objects.get_or_create(poll = poll, choice = 'advanced', pos=2)             
+                # Create choices for learning level poll.
+                Choice.objects.create(poll = poll, choice = 'beginner', pos=0)
+                Choice.objects.create(poll = poll, choice = 'intermediate', pos=1)
+                Choice.objects.create(poll = poll, choice = 'advanced', pos=2)
+
+                link = Link.objects.create(
+                    url = form.cleaned_data['url'], 
+                    learn_level_poll = poll
+                )
+          
 
             request.session['link'] = link
 
@@ -150,7 +215,7 @@ def bookmark_save(request):
             # )
 
             # Create or get bookmark.
-            bookmark, created = Bookmark.objects.get_or_create(
+            bookmark, bookmark_created = Bookmark.objects.get_or_create(
                 user=request.user, 
                 link=request.session.get('link', None)
             )
@@ -177,6 +242,36 @@ def bookmark_save(request):
 
             for tag in tags:
                 bookmark.tags.add(tag)
+
+            if not form.cleaned_data['private']:
+
+                if bookmark_created:
+                    # Create poll for interest.
+                    interest_poll = SingleChoicePoll.objects.create(
+                        question = "Interest Poll"
+                    )                
+
+                    # Create poll to report abuse.
+                    report_abuse_poll = SingleChoicePoll.objects.create(
+                        question = "Report Abuse Poll"
+                    )                 
+
+                    initial_hot_score = 0
+
+                    shared_bookmark = SharedBookmark.objects.create(
+                        bookmark = bookmark,
+                        interest_poll = interest_poll,
+                        report_abuse_poll = report_abuse_poll,
+                        hot_score = initial_hot_score
+                    )        
+
+                    SingleChoiceVote.objects.create(
+                        user = request.user, 
+                        poll = shared_bookmark.interest_poll, 
+                        ip = get_ip(request)
+                    )
+                    shared_bookmark.hot_score = shared_bookmark.get_hot_score()
+                    shared_bookmark.save()
             
             #return HttpResponseRedirect('/user/%s/' % request.user.username)
             return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))
