@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block user %}
     {% if user.is_authenticated and user.username == username %}
-        <a href="{% url 'bookmarks.views.user_page' user.username %}?show_edit=True">edit</a> |
+        <a href="{% url 'bookmarks.views.user_page' user.username %}?show_edit=1">edit</a> |
     {% endif %}
 {% endblock %}    
 {% block title %}
@@ -11,7 +11,11 @@
 {{ username }}&#39;s Bookmarks:
 {% endblock %}
 {% block content %}
-	{% include "bookmark_list.html" %}
+    {% if bookmarks %}
+        {% include "bookmark_list.html" %}
+    {% else %}
+        {% include "shared_bookmark_list.html" %}
+    {% endif %}
 {% endblock %}
 
 

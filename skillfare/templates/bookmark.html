@@ -1,3 +1,13 @@
+{% if bookmark.sharedbookmark %}
+Hot Score: {{ bookmark.sharedbookmark.hot_score}}
+<br/>
+<a href="{% url 'bookmarks.views.interest_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/thumbsup.png" alt="Like" title="Like"/></a>
+Interest: {{ bookmark.sharedbookmark.interest_poll.count_votes }}
+<br/>
+<a href="{% url 'bookmarks.views.report_abuse_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/flag.png" alt="Report Abuse" title="Report Abuse"/></a> Abuse: {{ bookmark.sharedbookmark.report_abuse_poll.count_votes }}
+<br/>
+{% endif %}
+
 <a href="{{ bookmark.link.url }}" class="title">
     {{ bookmark.title }}
 </a>

@@ -1,8 +1,8 @@
 from django.conf.urls import patterns, include, url
 from bookmarks.views import *
-from django.contrib.auth import views as auth_views
-from password_validation.forms import ValidPasswordRegistrationForm, ValidPasswordChangeForm
-from registration.views import register
+#from django.contrib.auth import views as auth_views
+#from password_validation.forms import ValidPasswordRegistrationForm, ValidPasswordChangeForm
+#from registration.views import register
 from djangoratings.views import AddRatingFromModel
 
 # Uncomment the next two lines to enable the admin:
@@ -14,43 +14,52 @@ urlpatterns = patterns('',
 	# Browsing
 	url(r'^$', main_page),
 	url(r'^user/([\w.@+-]+)/$', user_page),
-	url(r'^tag/([-\w]+)/$', tag_page),
+	url(r'^bookmarks/tag/([-\w]+)/$', tag_page),
     url(r'^delete/(?P<pk>\d+)/$', delete_bookmark), 
 
-    url(r'interest/(?P<pk>\d+)/$', interest_vote),
-    url(r'reportabuse/(?P<pk>\d+)/$', report_abuse_vote),
+    url(r'bookmark/interested/(?P<pk>\d+)/$', interest_vote),
+    url(r'bookmark/report_abuse/(?P<pk>\d+)/$', report_abuse_vote),
 
-	url(regex=r'^detail/(?P<pk>\d+)/(?P<slug>[-\w]*)/?$', view=bookmark_detail, 
+	url(regex=r'^bookmark/detail/(?P<pk>\d+)/(?P<slug>[-\w]*)/?$', view=bookmark_detail, 
 		name='detail'),
 
     #Learn Level Voting
-    url(r'^level_vote/(?P<pk>\d+)/(?P<level>[-\w]+)/$', level_vote),
+    url(r'^bookmark/level_vote/(?P<pk>\d+)/(?P<level>[-\w]+)/$', level_vote),
 
     # Ratings
-    url(r'^rate/(?P<object_id>\d+)/(?P<score>\d+)/', AddRatingFromModel(), {
+    url(r'^bookmark/rate/(?P<object_id>\d+)/(?P<score>\d+)/', AddRatingFromModel(), {
         'app_label': 'bookmarks',
         'model': 'link',
         'field_name': 'rating',
-    }),    
+    }, name='bookmark_rate'),    
 
 	# Search
-	url(r'^search/', include('haystack.urls')),
+	url(r'^bookmarks/search/', include('haystack.urls')),
 
 	# Session Management
-    url(r'^accounts/register/$', register,
-		{'backend': 'registration.backends.default.DefaultBackend', 
-	 	'form_class': ValidPasswordRegistrationForm},
-		name='registration_register'),
 
-	url(r'^accounts/password/change/$', auth_views.password_change, 
-		{'password_change_form': ValidPasswordChangeForm},
-		name='auth_password_change'),    
+    # The following url functions are being used to provide
+    # custom validation forms. When you provide html to 
+    # url reversal ensure that the 'name's below are being used
+    # These names will distinquish from the url functions 
+    # used in the registration app which has a weaker password
+    # validation.
+ #    url(r'^accounts/register/$', register,
+	# 	{'backend': 'registration.backends.default.DefaultBackend', 
+	#  	'form_class': ValidPasswordRegistrationForm},
+	# 	name='skillfare_registration_register'),
 
-	url(r'^accounts/', include('registration.urls')),
+	# url(r'^accounts/password/change/$', auth_views.password_change, 
+	# 	{'password_change_form': ValidPasswordChangeForm},
+	# 	name='skillfare_auth_password_change'),    
+
+    url(r'^accounts/', include('password_validation.urls')),
+
+	url(r'^accounts/', include('registration.backends.default.urls')),
 
 	# Account management
-	url(r'^save/link/$', bookmark_save_link),
-    url(r'^save/bookmark/$', bookmark_save),
+	url(r'^bookmark/save/link/$', bookmark_save_link),
+    url(r'^bookmark/save/bookmark/$', bookmark_save),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

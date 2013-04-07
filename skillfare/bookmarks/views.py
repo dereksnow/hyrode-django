@@ -13,6 +13,7 @@ from django.core.urlresolvers import reverse
 from taggit.models import Tag
 from django.views.generic import DetailView
 from bookmarks.models import Bookmark, SharedBookmark
+from bookmarks.utils import get_ip
 
 
 def bookmark_detail(request, pk, slug = ''):
@@ -28,45 +29,61 @@ def shared_bookmark_detail(request, pk, slug = ''):
         return HttpResponseRedirect(
             reverse(shared_bookmark_detail, args=[pk, shared_bookmark.slug])
         )
-    variables = {'bookmark': shared_bookmark}
-    return render(request, 'detail.html', variables)
+    variables = {'shared_bookmark': shared_bookmark}
+    return render(request, 'shared_detail.html', variables)
 
 def main_page(request):
-    shared_bookmarks = SharedBookmark.objects.order_by('-hot_score')[:20]
+    shared_bookmarks = Bookmark.objects.filter(private=False).order_by('-sharedbookmark__hot_score')[:20]
     variables = {
-        'shared_bookmarks': shared_bookmarks,
-        'show_tags': True
-        }
+        'bookmarks': shared_bookmarks,
+        'show_tags': True,
+        'show_user': True
+    }
     return render(request, 'main_page.html', variables)
 
+@login_required
 def user_page(request, username):
     if request.method == 'POST' and request.user.username == username:
         # Is Validation needed?? Investigate
         operation = request.POST.get('operation', None)
         if operation:
+            # editlist contain bookmark ids
             editlist = request.POST.getlist('editlist')
             editlist = [int(i) for i in editlist if i.isdigit()] 
-            bookmarklist = Bookmark.objects.filter(user=request.user,id__in=editlist)
+            bookmark_list = Bookmark.objects.filter(user=request.user,id__in=editlist)
             
-            if operation == 'delete':
-                bookmarklist.delete()
+            if operation == 'delete':                
+                for bookmark in bookmark_list:
+                    if bookmark.private == True or (bookmark.private == False and 
+                        bookmark.sharedbookmark.interest_poll.count_votes() < 2):
+                        bookmark.delete()
+
             elif operation == 'private':
-                for bookmark in bookmarklist:
-                    bookmark.private = True
-                    bookmark.save()
-            elif operation == 'public':
-                for bookmark in bookmarklist:
-                    bookmark.private = False
-                    bookmark.save()
+                for bookmark in bookmark_list:
+                    if bookmark.sharedbookmark.interest_poll.count_votes() < 2:
+                        bookmark.sharedbookmark.delete()
+                        bookmark.private = True
+
+            elif operation == 'public':                
+                for bookmark in bookmark_list:
+                    _save_sharedbookmark(reqest, bookmark)
+                bookmark_list.update(private=False)                    
 
             #return HttpResponseRedirect('/user/%s/' % request.user.username)    
         return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))    
     else:
         show_edit = request.REQUEST.get('show_edit', False) and request.user.username == username
         user = get_object_or_404(User, username=username)
-        bookmarks = user.bookmark_set.order_by('-id')
+        shared_bookmarks = SharedBookmark.objects.filter(bookmark__user=user).order_by('-hot_score')
+        if user == request.user:
+            bookmarks = Bookmark.objects.filter(user=user)
+        else:
+            bookmarks = None
+
+        #bookmarks = user.bookmark_set.order_by('-id')
         variables = {
             'username': username, 
+            'shared_bookmarks': shared_bookmarks,
             'bookmarks': bookmarks, 
             'show_tags': True,
             'show_edit': show_edit
@@ -147,20 +164,6 @@ def level_vote(request, pk, level):
 
 
     return HttpResponseRedirect(redirect_to)
-
-# helper function - should move to another file and import
-def get_ip(request):
-    """Returns the IP of the request, accounting for the possibility of being
-    behind a proxy.
-    """
-    ip = request.META.get("HTTP_X_FORWARDED_FOR", None)
-    if ip:
-        # X_FORWARDED_FOR returns client1, proxy1, proxy2,...
-        ip = ip.split(", ")[0]
-    else:
-        ip = request.META.get("REMOTE_ADDR", "")
-    return ip
-
 
 @login_required
 def bookmark_save_link(request):
@@ -246,32 +249,33 @@ def bookmark_save(request):
             if not form.cleaned_data['private']:
 
                 if bookmark_created:
-                    # Create poll for interest.
-                    interest_poll = SingleChoicePoll.objects.create(
-                        question = "Interest Poll"
-                    )                
+                    _save_sharedbookmark(request, bookmark)
+                    # # Create poll for interest.
+                    # interest_poll = SingleChoicePoll.objects.create(
+                    #     question = "Interest Poll"
+                    # )                
 
-                    # Create poll to report abuse.
-                    report_abuse_poll = SingleChoicePoll.objects.create(
-                        question = "Report Abuse Poll"
-                    )                 
+                    # # Create poll to report abuse.
+                    # report_abuse_poll = SingleChoicePoll.objects.create(
+                    #     question = "Report Abuse Poll"
+                    # )                 
 
-                    initial_hot_score = 0
+                    # initial_hot_score = 0
 
-                    shared_bookmark = SharedBookmark.objects.create(
-                        bookmark = bookmark,
-                        interest_poll = interest_poll,
-                        report_abuse_poll = report_abuse_poll,
-                        hot_score = initial_hot_score
-                    )        
+                    # shared_bookmark = SharedBookmark.objects.create(
+                    #     bookmark = bookmark,
+                    #     interest_poll = interest_poll,
+                    #     report_abuse_poll = report_abuse_poll,
+                    #     hot_score = initial_hot_score
+                    # )        
 
-                    SingleChoiceVote.objects.create(
-                        user = request.user, 
-                        poll = shared_bookmark.interest_poll, 
-                        ip = get_ip(request)
-                    )
-                    shared_bookmark.hot_score = shared_bookmark.get_hot_score()
-                    shared_bookmark.save()
+                    # SingleChoiceVote.objects.create(
+                    #     user = request.user, 
+                    #     poll = shared_bookmark.interest_poll, 
+                    #     ip = get_ip(request)
+                    # )
+                    # shared_bookmark.hot_score = shared_bookmark.get_hot_score()
+                    # shared_bookmark.save()
             
             #return HttpResponseRedirect('/user/%s/' % request.user.username)
             return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))
@@ -300,11 +304,43 @@ def bookmark_save(request):
                 
 def tag_page(request, tag_slug):
     tag = get_object_or_404(Tag, slug=tag_slug)
-    bookmarks = Bookmark.objects.filter(tags__name=tag.name).order_by('-modified')
-    variables = {'bookmarks': bookmarks, 'tag_name': tag.name,
-                    'show_tags': True, 'show_user': True}
+    bookmarks = Bookmark.objects.filter(tags__name=tag.name)
+    shared_bookmarks = SharedBookmark.objects.filter(bookmark__in=bookmarks)
+    variables = {
+        'shared_bookmarks': shared_bookmarks, 
+        'tag_name': tag.name,
+        'show_tags': True, 
+        'show_user': True
+    }
     return render(request, 'tag_page.html', variables)
 
+
+def _save_sharedbookmark(request, bookmark):
+    interest_poll = SingleChoicePoll.objects.create(
+        question = "Interest Poll"
+    )                
+
+    # Create poll to report abuse.
+    report_abuse_poll = SingleChoicePoll.objects.create(
+        question = "Report Abuse Poll"
+    )                 
+
+    initial_hot_score = 0
+
+    shared_bookmark = SharedBookmark.objects.create(
+        bookmark = bookmark,
+        interest_poll = interest_poll,
+        report_abuse_poll = report_abuse_poll,
+        hot_score = initial_hot_score
+    )        
+
+    SingleChoiceVote.objects.create(
+        user = request.user, 
+        poll = shared_bookmark.interest_poll, 
+        ip = get_ip(request)
+    )
+    shared_bookmark.hot_score = shared_bookmark.get_hot_score()
+    shared_bookmark.save()
 
 
 

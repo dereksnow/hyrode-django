@@ -170,6 +170,7 @@ THIRD_PARTY_APPS = (
     'taggit',
     'haystack',
     'djangoratings',
+    'disqus',
 )
 
 # Apps specific for this project go here.
@@ -228,3 +229,7 @@ HAYSTACK_SITECONF = 'skillfare.search_sites'
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
 
 HAYSTACK_WHOOSH_PATH = '/home/derek/Development/skillfare/skillfare/whoosh/skillfare_index'
+
+# disqus settings
+DISQUS_API_KEY = '4c3xp83TueY4cyULRyXldPmh8zMWahHCoXruS58fdDnUmSjqEJfubWmqq2aNXP06'
+DISQUS_WEBSITE_SHORTNAME = 'example.com'

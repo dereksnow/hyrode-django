@@ -25,7 +25,7 @@
                     path: "{{ STATIC_URL }}images/",
                     score: $(this).children("span:first").text(),
                     click: function(score, evt) {
-                        var vote_url = "/rate/" + $(this).attr('id') + "/" + score + "/";
+                        var vote_url = "bookmark/rate/" + $(this).attr('id') + "/" + score + "/";
                         $.ajax({
                           url: vote_url,
                           success: function(){
@@ -47,12 +47,12 @@
             {% if user.is_authenticated %}
                 {% block user %}
                 {% endblock %}
-                <a href="/save/link/">add bookmark</a> |
+                <a href="{% url 'bookmarks.views.bookmark_save_link' %}">add bookmark</a> |
                 logged in as {{ user.username }}
-                (<a href="/accounts/logout/">logout</a>)                
+                (<a href="{% url 'auth_logout' %}">logout</a>)                
             {% else %}
-                <a href="/accounts/login/">login</a> |
-                <a href="/accounts/register/">register</a>            
+                <a href="{% url 'auth_login' %}">login</a> |
+                <a href="{% url 'skillfare_registration_register' %}">register</a>            
             {% endif %}
         </div>
 
