@@ -86,7 +86,8 @@ def user_page(request, username):
             'shared_bookmarks': shared_bookmarks,
             'bookmarks': bookmarks, 
             'show_tags': True,
-            'show_edit': show_edit
+            'show_edit': show_edit,
+            'show_single_edit': True
         }
         return render(request, 'user_page.html', variables)
 
@@ -207,89 +208,81 @@ def bookmark_save(request):
     if request.method == 'POST':
         form = BookmarkSaveForm(request.POST)
         if form.is_valid():
-            # Create or get link.
-            # link, dummy = Link.objects.get_or_create(
-            #     url=form.cleaned_data['url']
-            # )
-            # Create or get bookmark.
-            # bookmark, created = Bookmark.objects.get_or_create(
-            #     user=request.user, 
-            #     link=link
-            # )
-
-            # Create or get bookmark.
-            bookmark, bookmark_created = Bookmark.objects.get_or_create(
-                user=request.user, 
-                link=request.session.get('link', None)
-            )
-
-            #Update bookmark title. 
-            bookmark.title = form.cleaned_data['title']
-
-            bookmark.private = form.cleaned_data['private']
-
-            # Save bookmark to database.
-            bookmark.save()
-
-            # Get features from form
-            features = form.cleaned_data['features']
-
-            # Add features to bookmark
-            for feature in features:
-                bookmark.features.add(feature)
-        
-
-            # Using django-taggit tags added after bookmark is saved
-            # Get tags from form
-            tags = form.cleaned_data['tags']
-
-            for tag in tags:
-                bookmark.tags.add(tag)
+            bookmark, bookmark_created = _bookmark_save(request, form)
 
             if not form.cleaned_data['private']:
-
                 if bookmark_created:
                     _save_sharedbookmark(request, bookmark)
-                    # # Create poll for interest.
-                    # interest_poll = SingleChoicePoll.objects.create(
-                    #     question = "Interest Poll"
-                    # )                
 
-                    # # Create poll to report abuse.
-                    # report_abuse_poll = SingleChoicePoll.objects.create(
-                    #     question = "Report Abuse Poll"
-                    # )                 
-
-                    # initial_hot_score = 0
-
-                    # shared_bookmark = SharedBookmark.objects.create(
-                    #     bookmark = bookmark,
-                    #     interest_poll = interest_poll,
-                    #     report_abuse_poll = report_abuse_poll,
-                    #     hot_score = initial_hot_score
-                    # )        
-
-                    # SingleChoiceVote.objects.create(
-                    #     user = request.user, 
-                    #     poll = shared_bookmark.interest_poll, 
-                    #     ip = get_ip(request)
-                    # )
-                    # shared_bookmark.hot_score = shared_bookmark.get_hot_score()
-                    # shared_bookmark.save()
-            
-            #return HttpResponseRedirect('/user/%s/' % request.user.username)
             return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))
-    else:
-        link = request.session.get('link', None)
-        if link:
-            # driver = webdriver.Firefox()
-            # driver.get(link.url)
-            # title = driver.title
-            # data = {'title': title}
-            soup = BeautifulSoup(urllib.urlopen(link.url), "lxml")
-            data = {'title': soup.title.string}
+    else:        
+        data = {}
+        edit_bookmark = False
+        if 'url' or 'id' in request.GET:
+            if 'url' in request.GET:
+                edit_bookmark = True
+                url = request.GET['url']
+            else:
+                id = request.GET['id']    
+            title = ''
+            tags = ''
+            features = ''
+            try:
+                if edit_bookmark:
+                    link = Link.objects.get(url=url)
+                    request.session['link'] = link
+                    bookmark = Bookmark.objects.get(
+                        link = link,
+                        user = request.user
+                    )
+                    private = bookmark.private
+                else:
+                    bookmark = Bookmark.objects.get(pk=id)
+                    request.session['link'] = bookmark.link
+                    private = True 
+                title = bookmark.title
+                tags = ','.join(tag.name for tag in bookmark.tags.all())
+                features = bookmark.features.values_list('id', flat=True)
+            except (Link.DoesNotExist, Bookmark.DoesNotExist):
+                pass
+            data = {
+                'title': title,
+                'tags': tags,
+                'features': features,
+                'private': private
+            }
+
+        # elif 'id' in request.GET:
+        #     id = request.GET['id']
+        #     title = ''
+        #     tags = ''
+        #     features = ''
+        #     try:
+        #         bookmark = Bookmark.objects.get(pk=id)
+        #         request.session['link'] = bookmark.link
+        #         title = bookmark.title
+        #         tags = ','.join(tag.name for tag in bookmark.tags.all())
+        #         features = bookmark.features.values_list('id', flat=True)
+        #         private = True
+        #         #assert False
+        #     except (Bookmark.DoesNotExist):
+        #         pass
+        #     data = {
+        #         'title': title,
+        #         'tags': tags,
+        #         'features': features,
+        #         'private': private
+        #     }            
         else:
-            data = {}
+            link = request.session.get('link', None) 
+            if link:
+                # driver = webdriver.Firefox()
+                # driver.get(link.url)
+                # title = driver.title
+                # data = {'title': title}
+                soup = BeautifulSoup(urllib.urlopen(link.url), "lxml")
+                data = {'title': soup.title.string}                
+                          
         form = BookmarkSaveForm(initial=data)
     variables = {'form': form}
     return render(request, 'bookmark_save.html', variables)
@@ -313,6 +306,43 @@ def tag_page(request, tag_slug):
         'show_user': True
     }
     return render(request, 'tag_page.html', variables)
+
+
+def _bookmark_save(request, form):
+    bookmark, bookmark_created = Bookmark.objects.get_or_create(
+        user=request.user, 
+        link=request.session.get('link', None)
+    )
+
+    # clean up session
+    if 'link' in request.session:
+        del request.session['link']
+
+    #Update bookmark title. 
+    bookmark.title = form.cleaned_data['title']
+
+    bookmark.private = form.cleaned_data['private']
+
+    # Save bookmark to database.
+    bookmark.save()
+
+    if not bookmark_created:
+    #     assert False
+        bookmark.features.clear()
+    # Get features from form
+    features = form.cleaned_data['features']
+
+    # Add features to bookmark
+    for feature in features:
+        bookmark.features.add(feature)
+
+    # Using django-taggit tags added after bookmark is saved
+    # Get tags from form
+    tags = form.cleaned_data['tags']
+    bookmark.tags.set(*tags)
+
+
+    return bookmark, bookmark_created
 
 
 def _save_sharedbookmark(request, bookmark):

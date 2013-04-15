@@ -1,11 +1,14 @@
 {% if bookmark.sharedbookmark %}
-Hot Score: {{ bookmark.sharedbookmark.hot_score}}
-<br/>
-<a href="{% url 'bookmarks.views.interest_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/thumbsup.png" alt="Like" title="Like"/></a>
-Interest: {{ bookmark.sharedbookmark.interest_poll.count_votes }}
-<br/>
-<a href="{% url 'bookmarks.views.report_abuse_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/flag.png" alt="Report Abuse" title="Report Abuse"/></a> Abuse: {{ bookmark.sharedbookmark.report_abuse_poll.count_votes }}
-<br/>
+    Hot Score: {{ bookmark.sharedbookmark.hot_score}}
+    <br/>
+    <a href="{% url 'bookmarks.views.interest_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/thumbsup.png" alt="Like" title="Like"/></a>
+    Interest: {{ bookmark.sharedbookmark.interest_poll.count_votes }}
+    <br/>
+    <a href="{% url 'bookmarks.views.report_abuse_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/flag.png" alt="Report Abuse" title="Report Abuse"/></a> Abuse: {{ bookmark.sharedbookmark.report_abuse_poll.count_votes }}
+    <br/>
+    {% if request.user.is_authenticated and request.user.username != bookmark.user.username %}
+        <a href="{% url 'bookmarks.views.bookmark_save'%}?id={{bookmark.id}}">add bookmark</a><br/>
+    {% endif %}
 {% endif %}
 
 <a href="{{ bookmark.link.url }}" class="title">
@@ -52,6 +55,9 @@ private bookmark {{bookmark.private}}
     <a href="{% url 'bookmarks.views.user_page' bookmark.user.username %}"
     class="username">
     {{ bookmark.user.username }}</a>
+{% endif %}
+{% if show_single_edit %}
+    <a href="{% url 'bookmarks.views.bookmark_save' %}?url={{bookmark.link.url}}">edit</a>
 {% endif %}
 {% if show_edit %}
     private bookmark {{bookmark.private}}
