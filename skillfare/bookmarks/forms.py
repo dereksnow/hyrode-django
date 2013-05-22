@@ -9,7 +9,7 @@ class BookmarkSaveForm(forms.Form):
 		label=u'Title', 
 		widget=forms.TextInput(attrs={'size':64})
 	)
-	private = forms.BooleanField(
+	personal = forms.BooleanField(
 		label=u'Private Bookmark',
 		required=False
 	)

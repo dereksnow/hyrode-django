@@ -5,6 +5,7 @@ from taggit.managers import TaggableManager
 from djangoratings.fields import RatingField
 from django.utils.text import slugify
 from datetime import datetime
+from django.core.urlresolvers import reverse
 
 try:
     from django.utils.timezone import now as now
@@ -66,7 +67,7 @@ class Bookmark(TimeStampedModel):
     title = models.CharField(max_length=200)
     user = models.ForeignKey(User)
     link = models.ForeignKey(Link)
-    private = models.BooleanField(default=False)
+    personal = models.BooleanField(default=False)
     slug = models.SlugField(max_length=255, blank=True, default='')
     features = models.ManyToManyField(Feature)
     tags = TaggableManager()
@@ -83,7 +84,7 @@ class Bookmark(TimeStampedModel):
         super(Bookmark, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse('detail', args=[str(self.id), self.slug])
+        return reverse('bookmark_detail', args=[str(self.id), self.slug])
 
 
 class SharedBookmark(TimeStampedModel):
