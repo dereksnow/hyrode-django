@@ -1,10 +1,10 @@
 {% if bookmark.sharedbookmark %}
     Hot Score: {{ bookmark.sharedbookmark.hot_score}}
     <br/>
-    <a href="{% url 'bookmarks.views.interest_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/thumbsup.png" alt="Like" title="Like"/></a>
-    Interest: {{ bookmark.sharedbookmark.interest_poll.count_votes }}
+    <a href="{% url 'bookmarks.views.interest_vote' bookmark.sharedbookmark.id %}?next={{request.path}}" class="interested"><img src="{{ STATIC_URL }}images/features/thumbsup.png" alt="Like" title="Like"/></a>
+    Interest: <span class="interest_count">{{ bookmark.sharedbookmark.interest_poll.count_votes }}</span>
     <br/>
-    <a href="{% url 'bookmarks.views.report_abuse_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/flag.png" alt="Report Abuse" title="Report Abuse"/></a> Abuse: {{ bookmark.sharedbookmark.report_abuse_poll.count_votes }}
+    <a href="{% url 'bookmarks.views.report_abuse_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/flag.png" alt="Report Abuse" title="Report Abuse"/></a> 
     <br/>
     {% if request.user.is_authenticated and request.user.username != bookmark.user.username %}
         <a href="{% url 'bookmarks.views.bookmark_save'%}?id={{bookmark.id}}">add bookmark</a><br/>
@@ -15,16 +15,13 @@
     {{ bookmark.title }}
 </a>
 <br/>
-{% if show_tags %}
-    Tags:                   
-    {% if bookmark.tags %}
-        <ul class="tags">
-            {% for tag in bookmark.tags.all %}
-                <li>
-                    <a href="{% url 'bookmarks.views.tag_page' tag.slug %}">
-                    {{ tag.name }}</a></li>{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        </ul>
+{% if show_tags %}            
+    {% if bookmark.tags %} 
+    Tags:                  
+        {% for tag in bookmark.tags.all %}
+            <a href="{% url 'bookmarks.views.tag_page' tag.slug %}">
+            {{ tag.name }}</a>{% if not forloop.last %},{% endif %}
+        {% endfor %}        
     {% else %}
         None.
     {% endif %}
@@ -43,10 +40,10 @@
 
 
 {% for choice in bookmark.link.learn_level_poll.choice_set.all %}
-    <li>{{ choice.choice }} - {{ choice.count_votes }}</li>
+    {{ choice.choice }} - {{ choice.count_votes }}
 {% endfor %}
 
-private bookmark {{bookmark.private}}
+personal bookmark {{bookmark.personal}}
 <!-- {% if user.is_authenticated and user.username == username %}
     <a href="{% url 'bookmarks.views.delete_bookmark' bookmark.id %}?next={{request.path}}">delete</a>
 {% endif %} -->
@@ -56,11 +53,18 @@ private bookmark {{bookmark.private}}
     class="username">
     {{ bookmark.user.username }}</a>
 {% endif %}
-{% if show_single_edit %}
-    <a href="{% url 'bookmarks.views.bookmark_save' %}?url={{bookmark.link.url}}">edit</a>
-{% endif %}
 {% if show_edit %}
-    private bookmark {{bookmark.private}}
+    personal bookmark {{bookmark.personal}}
     delete <input type="checkbox" name="editlist" value="{{bookmark.id}}">
 {% endif %}
-
+<br/>
+{% if not hide_more %}
+    {% if bookmark.sharedbookmark %}
+        <a href="{% url 'sharedbookmark_detail' bookmark.sharedbookmark.id bookmark.slug %}" class="more">more</a>
+    {% else %}
+        <a href="{% url 'bookmark_detail' bookmark.id bookmark.slug %}">more</a>
+    {% endif %}
+{% endif %}
+{% if request.user.username == username %}
+    <a href="{% url 'bookmark_delete' bookmark.id %}?next={{request.path}}">delete</a>
+{% endif %}

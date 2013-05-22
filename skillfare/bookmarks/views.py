@@ -3,7 +3,8 @@ from bs4 import BeautifulSoup
 # from selenium import webdriver
 # from selenium.webdriver.common.keys import Keys
 
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.core import serializers
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
 from bookmarks.models import Bookmark, Link, MultiChoicePoll, SingleChoicePoll, Choice, SingleChoiceVote, MultiChoiceVote
@@ -20,29 +21,31 @@ def bookmark_detail(request, pk, slug = ''):
     bookmark = get_object_or_404(Bookmark, pk = pk)
     if bookmark.slug != slug:
         return HttpResponseRedirect(reverse(bookmark_detail, args=[pk, bookmark.slug]))
-    variables = {'bookmark': bookmark}
+    variables = {'bookmark': bookmark,
+                 'hide_more': True}
     return render(request, 'detail.html', variables)
 
 def shared_bookmark_detail(request, pk, slug = ''):
     shared_bookmark = get_object_or_404(SharedBookmark, pk = pk)
-    if shared_bookmark.slug != slug:
+    if shared_bookmark.bookmark.slug != slug:
         return HttpResponseRedirect(
             reverse(shared_bookmark_detail, args=[pk, shared_bookmark.slug])
         )
-    variables = {'shared_bookmark': shared_bookmark}
-    return render(request, 'shared_detail.html', variables)
+    variables = {'bookmark': shared_bookmark.bookmark,
+                 'hide_more': True}
+    return render(request, 'detail.html', variables)
 
 def main_page(request):
-    shared_bookmarks = Bookmark.objects.filter(private=False).order_by('-sharedbookmark__hot_score')[:20]
+    shared_bookmarks = Bookmark.objects.filter(personal=False).order_by('-sharedbookmark__hot_score')[:20]
     variables = {
         'bookmarks': shared_bookmarks,
         'show_tags': True,
-        'show_user': True
+        'show_user': True,
     }
     return render(request, 'main_page.html', variables)
 
 @login_required
-def user_page(request, username):
+def user_page(request, username):    
     if request.method == 'POST' and request.user.username == username:
         # Is Validation needed?? Investigate
         operation = request.POST.get('operation', None)
@@ -54,7 +57,7 @@ def user_page(request, username):
             
             if operation == 'delete':                
                 for bookmark in bookmark_list:
-                    if bookmark.private == True or (bookmark.private == False and 
+                    if bookmark.personal == True or (bookmark.personal == False and 
                         bookmark.sharedbookmark.interest_poll.count_votes() < 2):
                         bookmark.delete()
 
@@ -62,40 +65,44 @@ def user_page(request, username):
                 for bookmark in bookmark_list:
                     if bookmark.sharedbookmark.interest_poll.count_votes() < 2:
                         bookmark.sharedbookmark.delete()
-                        bookmark.private = True
+                        bookmark.personal = True
 
             elif operation == 'public':                
                 for bookmark in bookmark_list:
                     _save_sharedbookmark(reqest, bookmark)
-                bookmark_list.update(private=False)                    
+                bookmark_list.update(personal=False)                    
 
             #return HttpResponseRedirect('/user/%s/' % request.user.username)    
         return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))    
-    else:
+    else:        
         show_edit = request.REQUEST.get('show_edit', False) and request.user.username == username
         user = get_object_or_404(User, username=username)
-        shared_bookmarks = SharedBookmark.objects.filter(bookmark__user=user).order_by('-hot_score')
-        if user == request.user:
-            bookmarks = Bookmark.objects.filter(user=user)
-        else:
-            bookmarks = None
-
+        #shared_bookmarks = SharedBookmark.objects.filter(bookmark__user=user).order_by('-hot_score')         
+        bookmarks = Bookmark.objects.filter(user=user)
+ 
         #bookmarks = user.bookmark_set.order_by('-id')
         variables = {
             'username': username, 
-            'shared_bookmarks': shared_bookmarks,
             'bookmarks': bookmarks, 
             'show_tags': True,
             'show_edit': show_edit,
-            'show_single_edit': True
+            'show_single_edit': user == request.user
         }
         return render(request, 'user_page.html', variables)
 
-
+@login_required
 def delete_bookmark(request, pk):
     redirect_to = request.REQUEST.get('next', '')
     bookmark = get_object_or_404(Bookmark, pk=pk)
-    bookmark.delete()
+    if bookmark.personal == True:
+        bookmark.delete()
+    else:
+        shared = get_object_or_404(SharedBookmark, bookmark=bookmark) 
+        if shared.interest_poll.count_votes() < 3:
+            bookmark.delete()
+        else:
+            pass
+            # assign another user to bookmark???
     return HttpResponseRedirect(redirect_to)
 
 
@@ -112,8 +119,11 @@ def interest_vote(request, pk):
         try:
             SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.interest_poll)
         
-        except SingleChoiceVote.DoesNotExist:
+        except SingleChoiceVote.DoesNotExist:            
             SingleChoiceVote.objects.create(user = request.user, poll = shared_bookmark.interest_poll, ip = ip)
+
+            if request.is_ajax():
+                return HttpResponse(shared_bookmark.interest_poll.count_votes())
 
     return HttpResponseRedirect(redirect_to)
 
@@ -133,6 +143,8 @@ def report_abuse_vote(request, pk):
         except SingleChoiceVote.DoesNotExist:
             if shared_bookmark.report_abuse_poll.count_votes() < 5:
                 SingleChoiceVote.objects.create(user = request.user, poll = shared_bookmark.report_abuse_poll, ip = ip)
+                if request.is_ajax():
+                    return HttpResponse(shared_bookmark.report_abuse_poll.count_votes())
             else :
                 shared_bookmark.bookmark.delete()
                 shared_bookmark.delete()
@@ -210,15 +222,28 @@ def bookmark_save(request):
         if form.is_valid():
             bookmark, bookmark_created = _bookmark_save(request, form)
 
-            if not form.cleaned_data['private']:
-                if bookmark_created:
-                    _save_sharedbookmark(request, bookmark)
-
-            return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))
+            if not form.cleaned_data['personal'] and bookmark_created:
+                _save_sharedbookmark(request, bookmark)
+            elif bookmark.sharedbookmark.interest_poll.count_votes() < 2:
+                bookmark.sharedbookmark.delete()
+                bookmark.personal = True
+                        
+            if request.is_ajax():
+                variables = {
+                    'bookmarks': [bookmark],
+                    'show_single_edit': True,
+                    'show_tags': True
+                }
+                return render(request, 'bookmark_list.html', variables)
+            else:
+                return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))
+        else:
+            if request.ajax():
+                return HttpResponse('failure')                
     else:        
         data = {}
         edit_bookmark = False
-        if 'url' or 'id' in request.GET:
+        if 'url' in request.GET or 'id' in request.GET:
             if 'url' in request.GET:
                 edit_bookmark = True
                 url = request.GET['url']
@@ -235,11 +260,11 @@ def bookmark_save(request):
                         link = link,
                         user = request.user
                     )
-                    private = bookmark.private
+                    personal = bookmark.personal
                 else:
                     bookmark = Bookmark.objects.get(pk=id)
                     request.session['link'] = bookmark.link
-                    private = True 
+                    personal = True 
                 title = bookmark.title
                 tags = ','.join(tag.name for tag in bookmark.tags.all())
                 features = bookmark.features.values_list('id', flat=True)
@@ -249,7 +274,7 @@ def bookmark_save(request):
                 'title': title,
                 'tags': tags,
                 'features': features,
-                'private': private
+                'personal': personal
             }
 
         # elif 'id' in request.GET:
@@ -263,7 +288,7 @@ def bookmark_save(request):
         #         title = bookmark.title
         #         tags = ','.join(tag.name for tag in bookmark.tags.all())
         #         features = bookmark.features.values_list('id', flat=True)
-        #         private = True
+        #         personal = True
         #         #assert False
         #     except (Bookmark.DoesNotExist):
         #         pass
@@ -271,7 +296,7 @@ def bookmark_save(request):
         #         'title': title,
         #         'tags': tags,
         #         'features': features,
-        #         'private': private
+        #         'personal': personal
         #     }            
         else:
             link = request.session.get('link', None) 
@@ -285,7 +310,10 @@ def bookmark_save(request):
                           
         form = BookmarkSaveForm(initial=data)
     variables = {'form': form}
-    return render(request, 'bookmark_save.html', variables)
+    if request.is_ajax():
+        return render(request, 'bookmark_save_form.html', variables)
+    else:
+        return render(request, 'bookmark_save.html', variables)
 
 # def tag_page(request, tag_name):
 #   #tag = get_object_or_404(Tag, name=tag_name)
@@ -321,7 +349,7 @@ def _bookmark_save(request, form):
     #Update bookmark title. 
     bookmark.title = form.cleaned_data['title']
 
-    bookmark.private = form.cleaned_data['private']
+    bookmark.personal = form.cleaned_data['personal']
 
     # Save bookmark to database.
     bookmark.save()
