@@ -15,13 +15,16 @@ urlpatterns = patterns('',
 	url(r'^$', main_page),
 	url(r'^user/([\w.@+-]+)/$', user_page),
 	url(r'^bookmarks/tag/([-\w]+)/$', tag_page),
-    url(r'^delete/(?P<pk>\d+)/$', delete_bookmark), 
+    url(r'^delete/(?P<pk>\d+)/$', view=delete_bookmark, name='bookmark_delete'), 
 
     url(r'bookmark/interested/(?P<pk>\d+)/$', interest_vote),
     url(r'bookmark/report_abuse/(?P<pk>\d+)/$', report_abuse_vote),
 
 	url(regex=r'^bookmark/detail/(?P<pk>\d+)/(?P<slug>[-\w]*)/?$', view=bookmark_detail, 
-		name='detail'),
+		name='bookmark_detail'),
+
+    url(regex=r'^sharedbookmark/detail/(?P<pk>\d+)/(?P<slug>[-\w]*)/?$', view=shared_bookmark_detail, 
+        name='sharedbookmark_detail'),    
 
     #Learn Level Voting
     url(r'^bookmark/level_vote/(?P<pk>\d+)/(?P<level>[-\w]+)/$', level_vote),
@@ -58,8 +61,8 @@ urlpatterns = patterns('',
 	url(r'^accounts/', include('registration.backends.default.urls')),
 
 	# Account management
-	url(r'^bookmark/save/link/$', bookmark_save_link),
-    url(r'^bookmark/save/bookmark/$', bookmark_save),
+	url(r'^link/save/$', bookmark_save_link),
+    url(r'^bookmark/save/$', bookmark_save),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
