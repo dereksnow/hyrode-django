@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+
+{% block external %}
+    <script type="text/javascript"
+        src="{{ STATIC_URL }}js/bookmark_edit.js"></script>
+{% endblock %}
 {% block user %}
     {% if user.is_authenticated and user.username == username %}
         <a href="{% url 'bookmarks.views.user_page' user.username %}?show_edit=1">edit</a> |
@@ -11,11 +16,7 @@
 {{ username }}&#39;s Bookmarks:
 {% endblock %}
 {% block content %}
-    {% if bookmarks %}
-        {% include "bookmark_list.html" %}
-    {% else %}
-        {% include "shared_bookmark_list.html" %}
-    {% endif %}
+    {% include "bookmark_list.html" %}
 {% endblock %}
 
 
