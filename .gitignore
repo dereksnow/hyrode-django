@@ -2,6 +2,11 @@
 *.orig
 *.pyc
 *.rej
+*.db
+*.png
+*.seg
+*.toc
+*.bak
 .installed.cfg
 __minitage__*
 bin/*
