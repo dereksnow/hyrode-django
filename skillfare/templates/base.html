@@ -1,65 +1,73 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html >
 <html>
     <head>
-        <title>{% block title %}
-            {% endblock %} | SkillFare
-        </title>
-        <link href="{{ STATIC_URL }}style.css" rel="stylesheet">
-        <script type="text/javascript" src="{{ STATIC_URL}}js/jquery.js"></script>
-<!--        <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.wookmark.min.js"></script>
-        <script type="text/javascript">
-            $(document).ready(function() {
-                $('#bookmarks li').wookmark({
-                autoResize: true,
-                offset: 2
-            });
-        }); 
-        </script> -->
-        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.raty.js"></script>
-        <script type="text/javascript" charset="utf-8">
-            $(document).ready(function() {
-                 $('.thingrating').each(function(index){
-                  $(this).raty({
-                    readOnly:  false,
-                    path: "{{ STATIC_URL }}images/",
-                    score: $(this).children("span:first").text(),
-                    click: function(score, evt) {
-                        var vote_url = "bookmark/rate/" + $(this).attr('id') + "/" + score + "/";
-                        $.ajax({
-                          url: vote_url,
-                          success: function(){
-                            alert('vote successful');
-                          }
-                        });
-                    }
-                  });
-                });
-            });
-        </script>
+        <title>{% block title %}{% endblock %} | hipode</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- Stylesheets -->
+        <link href="{{ STATIC_URL }}css/bootstrap.css" rel="stylesheet">
+        <link href="{{ STATIC_URL }}css/style.css" rel="stylesheet">
+        <link href="{{ STATIC_URL }}css/bootstrap-responsive.css" rel="stylesheet">
+        <link href="//netdna.bootstrapcdn.com/font-awesome/3.1.1/css/font-awesome.css" rel="stylesheet">
+        <!--[if IE 7]>
+            <link rel="stylesheet" href="{{ STATIC_URL }}css/font-awesome-ie7.min.css">
+        <![endif]-->
 
         {% block external %}
         {% endblock %}
     </head>
     <body>
-        <div id="nav">
-            <a href="/">home</a> | 
-            {% if user.is_authenticated %}
-                {% block user %}
+        <div class="navbar navbar-inverse navbar-fixed-top">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>                        
+                        <a class="brand" href="/">hip<strong>ode</strong></a>
+                        <div class="nav-collapse collapse">
+                            <ul class="nav pull-right">
+                            {% if user.is_authenticated %}
+                                {% block user %}
+                                {% endblock %}
+
+                                    <li><a href="{% url 'bookmarks.views.bookmark_save_link' %}"><i class="icon-plus"></i> resource</a></li>
+                                <li class="dropdown">
+                                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">                             
+                                        {{ user.username }}
+                                        <b class="caret"></b>
+                                    </a>
+                                    <ul class="dropdown-menu" id="swatch-menu">
+                                        <li><a href="{% url 'auth_logout' %}"><i class="icon-signout"></i> logout</a></li>
+                                    </ul>
+                                </li>
+                            {% else %}
+                                <li><a href="{% url 'auth_login' %}">login</a></li> 
+                                <li><a href="{% url 'skillfare_registration_register' %}">register</a></li>            
+                            {% endif %}
+                        </div><!--/.nav-collapse -->
+                    </div> <!--/.container -->
+                </div><!--/.navbar-inner -->
+        </div><!--/.navbar -->
+        <div class="container">
+            {% block head %}
                 {% endblock %}
-                <a href="{% url 'bookmarks.views.bookmark_save_link' %}">add bookmark</a> |
-                logged in as {{ user.username }}
-                (<a href="{% url 'auth_logout' %}">logout</a>)                
-            {% else %}
-                <a href="{% url 'auth_login' %}">login</a> |
-                <a href="{% url 'skillfare_registration_register' %}">register</a>            
-            {% endif %}
+            
+            {% block content %}
+            {% endblock %}
         </div>
 
-        <h1>{% block head %}
-            {% endblock %}
-        </h1>
-        {% block content %}
-        {% endblock %}
+        <!-- Javascript ================================= -->
+        <!-- Placed at the end of body, so pages load faster -->
+        <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+        <!--[if lt IE 9]>
+            <script src="{{ STATIC_URL}}js/html5shiv.js"></script>
+        <![endif]-->                
+        <script type="text/javascript" src="{{ STATIC_URL}}js/jquery.js"></script>
+        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/bootstrap.js"></script>
+        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.raty.js"></script>
+        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.bookmark.rate.js"></script>
+        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.update_counts.js"></script>
     </body>
 </html>

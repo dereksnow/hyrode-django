@@ -1,23 +1,62 @@
+{% load bookmarks_extras %}
 {% if bookmark.sharedbookmark %}
-    Hot Score: {{ bookmark.sharedbookmark.hot_score}}
-    <br/>
-    <a href="{% url 'bookmarks.views.interest_vote' bookmark.sharedbookmark.id %}?next={{request.path}}" class="interested"><img src="{{ STATIC_URL }}images/features/thumbsup.png" alt="Like" title="Like"/></a>
-    Interest: <span class="interest_count">{{ bookmark.sharedbookmark.interest_poll.count_votes }}</span>
-    <br/>
-    <a href="{% url 'bookmarks.views.report_abuse_vote' bookmark.sharedbookmark.id %}?next={{request.path}}"><img src="{{ STATIC_URL }}images/features/flag.png" alt="Report Abuse" title="Report Abuse"/></a> 
-    <br/>
-    {% if request.user.is_authenticated and request.user.username != bookmark.user.username %}
-        <a href="{% url 'bookmarks.views.bookmark_save'%}?id={{bookmark.id}}">add bookmark</a><br/>
-    {% endif %}
+<div class="row-fluid">
+    <div class="span6">
+    {% if bookmark.sharedbookmark %}
+        {% if request.user.username != bookmark.user.username %}
+        <span>
+            <a href="{% url 'bookmarks.views.bookmark_save'%}?id={{bookmark.id}}" class="bookmark_icon_link"><i class="icon-bookmark icon-large"></i></a>
+        </span>
+        {% endif %}     
+        <span>
+        <a href="{% url 'bookmarks.views.interest_vote' bookmark.sharedbookmark.id %}?next={{request.path}}" class="bookmark_icon_link interested"><i class="icon-thumbs-up icon-large"></i></a>
+        </span>
+        <span>
+            <a hred="{% url 'sharedbookmark_detail' bookmark.sharedbookmark.id bookmark.slug %}" class="bookmark_icon_link more"><i class="icon-comment icon-large"></i></a>
+        </span>
+        <span>
+        <a href="{% url 'bookmarks.views.report_abuse_vote' bookmark.sharedbookmark.id %}?next={{request.path}}" class="bookmark_icon_link"><i class="icon-flag icon-large bookmark_icon_link"></i></a> 
+        </span>
+    {% endif %}   
+    </div>
+
+    <div class="span6">
+        <span class="pull-right">{{ bookmark.sharedbookmark.hot_score}}</span>
+    </div>
+</div>
+<hr>
+{% endif %}
+<div><a href="{{ bookmark.link.url }}" class="title">
+    {{ bookmark.title }}
+</a></div>
+<div class="thingrating" id="{{ bookmark.link.id }}"><span style="display:none;">{{ bookmark.link.rating.get_rating }}</span></div>
+
+
+{% if bookmark.features %}
+<div>
+
+{% for feature in bookmark.features.all %}
+    <span><i class="{{ feature.description|font_icon }} icon-large bookmark_icon_nolink"></i></span>
+{% endfor %}
+
+</div>
 {% endif %}
 
-<a href="{{ bookmark.link.url }}" class="title">
-    {{ bookmark.title }}
-</a>
-<br/>
-{% if show_tags %}            
+
+
+
+
+<div>
+{% for choice in bookmark.link.learn_level_poll.choice_set.all %}
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id choice.choice %}?next={{request.path}}">{{ choice.choice }}</a>  {{ choice.count_votes }}
+{% endfor %}
+</div>
+
+<hr>
+{% if show_tags %} 
+<div>           
     {% if bookmark.tags %} 
-    Tags:                  
+    <i class="icon-tags icon-large bookmark_icon_nolink"></i>                  
         {% for tag in bookmark.tags.all %}
             <a href="{% url 'bookmarks.views.tag_page' tag.slug %}">
             {{ tag.name }}</a>{% if not forloop.last %},{% endif %}
@@ -25,46 +64,30 @@
     {% else %}
         None.
     {% endif %}
-    <br/>
-{% endif %}
-{% for feature in bookmark.features.all %}
-    <img src="{{ STATIC_URL }}images/features/{{feature.description}}.png" alt="{{feature.description}}" title="{{feature.description}}"/>
-{% endfor %}
-<div class="thingrating" id="{{ bookmark.link.id }}"><span style="display:none;">{{ bookmark.link.rating.get_rating }}</span></div>
-<div>{{ bookmark.link.rating.get_rating }}</span></div>
-<div class="level_vote">
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'beginner' %}?next={{request.path}}">Beginner</a> |
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'intermediate' %}?next={{request.path}}">Intermediate</a> |
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'advanced' %}?next={{request.path}}">Advanced</a>
 </div>
-
-
-{% for choice in bookmark.link.learn_level_poll.choice_set.all %}
-    {{ choice.choice }} - {{ choice.count_votes }}
-{% endfor %}
-
-personal bookmark {{bookmark.personal}}
-<!-- {% if user.is_authenticated and user.username == username %}
-    <a href="{% url 'bookmarks.views.delete_bookmark' bookmark.id %}?next={{request.path}}">delete</a>
-{% endif %} -->
-{% if show_user %}
-    Posted by:
-    <a href="{% url 'bookmarks.views.user_page' bookmark.user.username %}"
-    class="username">
-    {{ bookmark.user.username }}</a>
 {% endif %}
+
 {% if show_edit %}
     personal bookmark {{bookmark.personal}}
     delete <input type="checkbox" name="editlist" value="{{bookmark.id}}">
 {% endif %}
-<br/>
-{% if not hide_more %}
-    {% if bookmark.sharedbookmark %}
-        <a href="{% url 'sharedbookmark_detail' bookmark.sharedbookmark.id bookmark.slug %}" class="more">more</a>
-    {% else %}
-        <a href="{% url 'bookmark_detail' bookmark.id bookmark.slug %}">more</a>
-    {% endif %}
-{% endif %}
+
+
 {% if request.user.username == username %}
     <a href="{% url 'bookmark_delete' bookmark.id %}?next={{request.path}}">delete</a>
+{% endif %}
+
+{% if bookmark.sharedbookmark %}
+    <div class="row-fluid">
+        <div class="span12">        
+            likes: <span class="interest_count">{{ bookmark.sharedbookmark.interest_poll.count_votes }}</span>
+
+            <span class="pull-right">     
+                <i class="icon-user"></i>
+                <a href="{% url 'bookmarks.views.user_page' bookmark.user.username %}"
+                class="username">
+                {{ bookmark.user.username }}</a>
+            </span>
+        </div>
+    </div>
 {% endif %}

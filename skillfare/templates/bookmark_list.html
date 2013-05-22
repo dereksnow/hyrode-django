@@ -1,24 +1,25 @@
 {% if bookmarks %}
-    <ul id="bookmarks">
-        {% if show_edit %}
-            <form action="." method="post">{% csrf_token %}
-                <select name="operation">
-                    <option value=''>--------------------</option>                    
-                    <option value="delete">Delete</option>
-                    <option value="private">Make Private</option>
-                    <option value="public">Make Public</option>
-                </select>                  
-        {% endif %}
-                {% for bookmark in bookmarks %}
-                    <li>
+<div class="row-fluid">
+    <ul class="bookmarks thumbnails">
+        {% for bookmark in bookmarks %}
+            {% if request.user.username == username or not bookmark.personal %}
+                {% if forloop.counter0 > 1 and forloop.counter0|divisibleby:4 %}
+                    <li class="span3 firstcol">                    
+                {% else %}
+                    <li class="span3">                        
+                {% endif %}
+                    <article class="thumbnail bookmark">
                         {% include "bookmark.html" %}
-                    </li>
-                {% endfor %}
-        {% if show_edit %}
-            <input type="submit" value="Submit" />
-            </form>
-        {% endif %}
+
+                        {% if show_single_edit %}
+                            <a href="{% url 'bookmarks.views.bookmark_save' %}?url={{bookmark.link.url}}" class="edit">edit</a>
+                        {% endif %}
+                    </article>
+                </li>
+            {% endif %}
+        {% endfor %}
     </ul>
+</div>
 {% else %}
     <p>No bookmarks found.</p>
 {% endif %}

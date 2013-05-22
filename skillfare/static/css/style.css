@@ -1,0 +1,130 @@
+@import url('//fonts.googleapis.com/css?family=Roboto:400,700,300');
+@import url('//fonts.googleapis.com/css?family=Roboto+Slab:400');
+
+
+@media (min-width: 1200px) {
+  .span12, .container {
+    width: 1170px;
+  }
+}
+
+.bookmark {
+    background-color: #ffffff;
+    background-image:url('../images/top-border.png');    
+    background-repeat:repeat-x; 
+    /*background-image:url('../images/yellow2-mello.png');*/
+    
+}
+
+.bookmark_icon_nolink, body {
+    color: #404040;
+    /*text-shadow: 0 1px 0 #E0E0E0;*/
+}
+
+a.bookmark_icon_link {
+    text-decoration: none;
+}
+
+.title {
+    font-size: 1.5em;
+    color: #2d5f73;
+    /*text-shadow: 0 1px 0 #E0E0E0;*/
+}
+
+.thingrating {
+    margin-bottom: 5px;
+    width: 150px;
+}
+
+li.span3.firstcol{
+    margin-left: 0px;
+}
+
+body {
+    padding-top: 60px;
+    padding-bottom: 40px;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    background-image:url('../images/grey-skies.png');    
+    /*background-color: #5E5E5E;*/
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: inherit;
+}
+
+input,
+button,
+select,
+textarea {
+  font-family: "Roboto", Helvetica, Arial, sans-serif;
+}
+
+.navbar .brand {
+  color: #ffffff;
+  font-family: "Roboto Slab", Helvetica, Arial, sans-serif;
+}
+
+.navbar-search .search-query {
+  padding: 4px 14px;
+  margin-bottom: 0;
+  font-family: "Roboto", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-border-radius: 15px;
+     -moz-border-radius: 15px;
+          border-radius: 15px;
+}
+
+.navbar-inverse .navbar-inner { 
+  background-image: none;
+  background-repeat: no-repeat;
+  background-color: #424254;
+  filter: none;
+}
+
+.navbar .nav > li > a {
+  float: none;
+  padding: 10px 15px 10px;
+  /*color: #919191;*/
+  text-decoration: none;
+  /*text-shadow: 0 1px 0 #FAFAFA;*/
+  border-color: #78ada6;
+}
+
+a {
+  color: #404040;
+  /*text-shadow: 0 1px 0 #E0E0E0;*/
+  text-decoration: none;
+}
+
+.bookmark-foot {
+    margin-top: 10px;
+}
+
+.likes {
+    padding-right: 5px;
+}
+
+
+.thumbnail {
+    border-radius: 0; /* remove rounded border */
+    padding: 10px;
+}
+
+span + span {
+    margin-left: 10px;
+}
+
+article hr {
+    margin: 5px 0px 10px;
+}
+
+article div + div:not(.span6){
+    margin-top: 7px;
+}
