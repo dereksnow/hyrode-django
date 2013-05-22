@@ -225,6 +225,11 @@ EMAIL_PORT = 587
 
 
 # haystack settings
+################################################################################
+# NOTE: MUST run django-admin rebuild-index or django-admin update-index to 
+# include latest bookmark changes. When implemented on the PAAS, write a cron
+# task to run update-index on a periodic basis.
+################################################################################
 HAYSTACK_SITECONF = 'skillfare.search_sites'
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
 
