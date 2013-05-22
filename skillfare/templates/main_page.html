@@ -3,14 +3,7 @@
 Find, Share and Store Learning Resources.
 {% endblock %}
 {% block head %}
-SkillFare
 {% endblock %}
 {% block content %}
-	{% if user.username %}
-		<p>Welcome {{ user.username }}! Find, 
-			Share and Store Learning Resources.</p>
-	{% else %}
-		<p><a href="/accounts/login/">Login</a> to Store and Share Learning Resources.</p>
-	{% endif %}
     {% include "bookmark_list.html" %}
 {% endblock %}
