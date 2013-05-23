@@ -35,8 +35,9 @@ $.ajaxSetup({
 });
 
 function update_count() {
-    var count = $(this).next("span.interest_count");
-    var id = $(this).parent().find("a.more").attr("href").match(/\/sharedbookmark\/detail\/([0-9]+)/)[1];
+    var count = $(this).parents("article").find("span.interest_count");
+    var temp = $(this).parent().next($("span a.more"));
+    var id = $(this).closest("div").find("a.more").attr("href").match(/\/sharedbookmark\/detail\/([0-9]+)/)[1];
     var url = "/bookmark/interested/" + id + "/";
     $.post(url, function (result) {
         count.text(result);

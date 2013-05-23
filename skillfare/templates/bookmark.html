@@ -12,7 +12,7 @@
         <a href="{% url 'bookmarks.views.interest_vote' bookmark.sharedbookmark.id %}?next={{request.path}}" class="bookmark_icon_link interested"><i class="icon-thumbs-up icon-large"></i></a>
         </span>
         <span>
-            <a hred="{% url 'sharedbookmark_detail' bookmark.sharedbookmark.id bookmark.slug %}" class="bookmark_icon_link more"><i class="icon-comment icon-large"></i></a>
+            <a href="{% url 'sharedbookmark_detail' bookmark.sharedbookmark.id bookmark.slug %}" class="bookmark_icon_link more"><i class="icon-comment icon-large"></i></a>
         </span>
         <span>
         <a href="{% url 'bookmarks.views.report_abuse_vote' bookmark.sharedbookmark.id %}?next={{request.path}}" class="bookmark_icon_link"><i class="icon-flag icon-large bookmark_icon_link"></i></a> 
