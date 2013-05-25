@@ -47,9 +47,9 @@
 
 
 <div>
-{% for choice in bookmark.link.learn_level_poll.choice_set.all %}
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id choice.choice %}?next={{request.path}}">{{ choice.choice }}</a>  {{ choice.count_votes }}
-{% endfor %}
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'BR' %}?next={{request.path}}">beg</a>  {{ bookmark.link.count_beginner_votes }}
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'IN' %}?next={{request.path}}">int</a>  {{ bookmark.link.count_intermediate_votes }}
+    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'AD' %}?next={{request.path}}">adv</a>  {{ bookmark.link.count_advanced_votes }}
 </div>
 
 <hr>
@@ -80,7 +80,7 @@
 {% if bookmark.sharedbookmark %}
     <div class="row-fluid">
         <div class="span12">        
-            likes: <span class="interest_count">{{ bookmark.sharedbookmark.interest_poll.count_votes }}</span>
+            likes: <span class="interest_count">{{ bookmark.sharedbookmark.count_like_votes }}</span>
 
             <span class="pull-right">     
                 <i class="icon-user"></i>

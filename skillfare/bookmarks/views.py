@@ -7,7 +7,7 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.core import serializers
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
-from bookmarks.models import Bookmark, Link, MultiChoicePoll, SingleChoicePoll, Choice, SingleChoiceVote, MultiChoiceVote
+from bookmarks.models import Bookmark, Link, LikeVote, AbuseVote, LevelVote
 from bookmarks.forms import BookmarkSaveForm, LinkSaveForm
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -114,16 +114,17 @@ def interest_vote(request, pk):
 
     ip = get_ip(request)
 
-    if SingleChoiceVote.objects.filter(poll = shared_bookmark.interest_poll, ip = ip).count() <= 5:
+    #if SingleChoiceVote.objects.filter(poll = shared_bookmark.interest_poll, ip = ip).count() <= 5:
+    if LikeVote.objects.filter(shared_bookmark = shared_bookmark, ip = ip).count() < 5:        
         
         try:
-            SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.interest_poll)
-        
-        except SingleChoiceVote.DoesNotExist:            
-            SingleChoiceVote.objects.create(user = request.user, poll = shared_bookmark.interest_poll, ip = ip)
+            #SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.interest_poll)            
+            LikeVote.objects.get(user = request.user, shared_bookmark = shared_bookmark)
+        except LevelVote.DoesNotExist:            
+            LikeVote.objects.create(user = request.user, ip = ip, shared_bookmark = shared_bookmark)
 
             if request.is_ajax():
-                return HttpResponse(shared_bookmark.interest_poll.count_votes())
+                return HttpResponse(shared_bookmark.count_like_votes())
 
     return HttpResponseRedirect(redirect_to)
 
@@ -136,20 +137,19 @@ def report_abuse_vote(request, pk):
 
     ip = get_ip(request)
 
-    if SingleChoiceVote.objects.filter(poll = shared_bookmark.report_abuse_poll, ip = ip).count() <= 5:
-        
+    #if SingleChoiceVote.objects.filter(poll = shared_bookmark.report_abuse_poll, ip = ip).count() <= 5:
+    if AbuseVote.objects.filter(shared_bookmark = shared_bookmark, ip = ip).count() < 5:   
         try:
-            SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.report_abuse_poll)
-        except SingleChoiceVote.DoesNotExist:
-            if shared_bookmark.report_abuse_poll.count_votes() < 5:
-                SingleChoiceVote.objects.create(user = request.user, poll = shared_bookmark.report_abuse_poll, ip = ip)
+            #SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.report_abuse_poll)
+            AbuseVote.objects.get(user = request.user, shared_bookmark = shared_bookmark)
+        except AbuseVote.DoesNotExist:
+            if shared_bookmark.count_abuse_votes() < 5:
+                AbuseVote.objects.create(user = request.user, ip = ip, shared_bookmark = shared_bookmark)
                 if request.is_ajax():
-                    return HttpResponse(shared_bookmark.report_abuse_poll.count_votes())
+                    return HttpResponse(shared_bookmark.count_abuse_votes())
             else :
-                shared_bookmark.bookmark.delete()
-                shared_bookmark.delete()
-                
-            
+                shared_bookmark.bookmark.delete()                
+                            
     return HttpResponseRedirect(redirect_to)
 
 
@@ -161,19 +161,13 @@ def level_vote(request, pk, level):
     
     link = get_object_or_404(Link, pk=pk)
 
-    choice, created = Choice.objects.get_or_create(
-        poll = link.learn_level_poll, 
-        choice = level
-    )  
-
     ip = get_ip(request)
 
-    if MultiChoiceVote.objects.filter(poll = link.learn_level_poll, ip=ip).count() <= 5:
-        
+    if LevelVote.objects.filter(link = link, ip=ip).count() <= 5:        
         try:        
-            MultiChoiceVote.objects.get(user = request.user, poll = link.learn_level_poll)
-        except MultiChoiceVote.DoesNotExist:
-            MultiChoiceVote.objects.create(user = request.user, choice=choice, poll = link.learn_level_poll, ip=ip)
+            LevelVote.objects.get(user = request.user, link = link)
+        except LevelVote.DoesNotExist:
+            LevelVote.objects.create(user = request.user, ip = ip, learn_level = level, link = link)
 
 
     return HttpResponseRedirect(redirect_to)
@@ -190,19 +184,8 @@ def bookmark_save_link(request):
             try:
                 link = Link.objects.get(url = form.cleaned_data['url'])
             except Link.DoesNotExist:
-
-                poll = MultiChoicePoll.objects.create(
-                    question = "Learning Level Poll"
-                )
-
-                # Create choices for learning level poll.
-                Choice.objects.create(poll = poll, choice = 'beginner', pos=0)
-                Choice.objects.create(poll = poll, choice = 'intermediate', pos=1)
-                Choice.objects.create(poll = poll, choice = 'advanced', pos=2)
-
                 link = Link.objects.create(
-                    url = form.cleaned_data['url'], 
-                    learn_level_poll = poll
+                    url = form.cleaned_data['url']
                 )
           
 
@@ -221,13 +204,38 @@ def bookmark_save(request):
         form = BookmarkSaveForm(request.POST)
         if form.is_valid():
             bookmark, bookmark_created = _bookmark_save(request, form)
-
-            if not form.cleaned_data['personal'] and bookmark_created:
-                _save_sharedbookmark(request, bookmark)
-            elif bookmark.sharedbookmark.interest_poll.count_votes() < 2:
-                bookmark.sharedbookmark.delete()
-                bookmark.personal = True
                         
+            if not form.cleaned_data['personal']:
+                # create a shared_bookmark for newly created public bookmark
+                if bookmark_created:
+                    _save_sharedbookmark(request, bookmark)
+                    
+                # This case is for a bookmark having been marked as private and
+                # then made public                 
+                else:
+                    try:
+                        SharedBookmark.objects.get(bookmark = bookmark)
+                    except SharedBookmark.DoesNotExist:
+                        _save_sharedbookmark(request, bookmark)  
+                
+                bookmark.personal = False 
+            # bookmark is personal
+            else: 
+                # check if a personal bookmark has an existing shared_bookmark
+                # and remove it. This case is for a bookmark having been
+                # marked as public and then made private
+                if not bookmark_created:
+                    try:
+                        shared = SharedBookmark.objects.get(bookmark = bookmark)
+                        shared.delete()
+                    except SharedBookmark.DoesNotExist:
+                        pass
+                # else bookmark just created 
+                    # no need to check for existing shared_bookmark, since
+                    # bookmark was just created
+
+                bookmark.personal = True
+                                          
             if request.is_ajax():
                 variables = {
                     'bookmarks': [bookmark],
@@ -374,29 +382,36 @@ def _bookmark_save(request, form):
 
 
 def _save_sharedbookmark(request, bookmark):
-    interest_poll = SingleChoicePoll.objects.create(
-        question = "Interest Poll"
-    )                
+    # interest_poll = SingleChoicePoll.objects.create(
+    #     question = "Interest Poll"
+    # )                
 
     # Create poll to report abuse.
-    report_abuse_poll = SingleChoicePoll.objects.create(
-        question = "Report Abuse Poll"
-    )                 
+    # report_abuse_poll = SingleChoicePoll.objects.create(
+    #     question = "Report Abuse Poll"
+    # )                 
 
     initial_hot_score = 0
 
     shared_bookmark = SharedBookmark.objects.create(
         bookmark = bookmark,
-        interest_poll = interest_poll,
-        report_abuse_poll = report_abuse_poll,
+        # interest_poll = interest_poll,
+        # report_abuse_poll = report_abuse_poll,
         hot_score = initial_hot_score
     )        
 
-    SingleChoiceVote.objects.create(
-        user = request.user, 
-        poll = shared_bookmark.interest_poll, 
-        ip = get_ip(request)
+    # SingleChoiceVote.objects.create(
+    #     user = request.user, 
+    #     poll = shared_bookmark.interest_poll, 
+    #     ip = get_ip(request)
+    # )
+
+    LikeVote.objects.create(
+        user = request.user,
+        ip = get_ip(request),
+        shared_bookmark = shared_bookmark
     )
+
     shared_bookmark.hot_score = shared_bookmark.get_hot_score()
     shared_bookmark.save()
 

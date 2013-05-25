@@ -16,46 +16,57 @@ except ImportError:
 # modified field to all models that inherit from it.
 
 
-class PollBase(TimeStampedModel):
-    question = models.CharField(max_length=255)
-    #description = models.TextField(blank=True)
+# class PollBase(TimeStampedModel):
+#     question = models.CharField(max_length=255)
+#     #description = models.TextField(blank=True)
 
-    class Meta:
-        abstract = True    
+#     class Meta:
+#         abstract = True    
 
-    def __unicode__(self):
-        return self.question
+#     def __unicode__(self):
+#         return self.question
 
-class SingleChoicePoll(PollBase):
+# class SingleChoicePoll(PollBase):
 
-    def count_votes(self):
-        return self.singlechoicevote_set.count()
+#     def count_votes(self):
+#         return self.singlechoicevote_set.count()
 
 
-class MultiChoicePoll(PollBase):
-    #question = models.CharField(max_length=255)
-    #description = models.TextField(blank=True)
+# class MultiChoicePoll(PollBase):
+#     #question = models.CharField(max_length=255)
+#     #description = models.TextField(blank=True)
 
-    def count_choices(self):
-        return self.choice_set.count()
+#     def count_choices(self):
+#         return self.choice_set.count()
 
-    def count_total_votes(self):
-        result = 0
-        for choice in self.choice_set.all():
-            result += choice.count_votes()
-        return result
+#     def count_total_votes(self):
+#         result = 0
+#         for choice in self.choice_set.all():
+#             result += choice.count_votes()
+#         return result
 
 
 class Link(TimeStampedModel):
     url = models.URLField(unique=True)
     rating = RatingField(range=5, can_change_vote=True)
-    learn_level_poll = models.OneToOneField(MultiChoicePoll)
 
     def __unicode__(self):
         return self.url
 
+    def count_level_votes(self):
+        return self.levelvote_set.count()   
+
+    def count_beginner_votes(self):
+        return self.levelvote_set.filter(learn_level = LevelVote.BEGINNER).count()      
+
+    def count_intermediate_votes(self):
+        return self.levelvote_set.filter(learn_level = LevelVote.INTERMEDIATE).count()
+
+    def count_advanced_votes(self):
+        return self.levelvote_set.filter(learn_level = LevelVote.ADVANCED).count()            
+
 class Feature(TimeStampedModel):
-    description = models.CharField(max_length=50)
+    description = models.CharField(max_length = 50)
 
     def __unicode__(self):
         return u'%s' % (self.description)
@@ -64,11 +75,11 @@ class Feature(TimeStampedModel):
         ordering = ['description']        
 
 class Bookmark(TimeStampedModel):
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length = 200)
     user = models.ForeignKey(User)
     link = models.ForeignKey(Link)
-    personal = models.BooleanField(default=False)
-    slug = models.SlugField(max_length=255, blank=True, default='')
+    personal = models.BooleanField(default = False)
+    slug = models.SlugField(max_length = 255, blank = True, default = '')
     features = models.ManyToManyField(Feature)
     tags = TaggableManager()
     
@@ -89,8 +100,8 @@ class Bookmark(TimeStampedModel):
 
 class SharedBookmark(TimeStampedModel):
     bookmark = models.OneToOneField(Bookmark)
-    interest_poll = models.OneToOneField(SingleChoicePoll, related_name='shared_bookmark')
-    report_abuse_poll = models.OneToOneField(SingleChoicePoll)
+    #interest_poll = models.OneToOneField(SingleChoicePoll, related_name='shared_bookmark')
+    #report_abuse_poll = models.OneToOneField(SingleChoicePoll)
     # slug = models.SlugField(max_length=255, blank=True, default='')
     hot_score = models.PositiveIntegerField()
     
@@ -108,23 +119,30 @@ class SharedBookmark(TimeStampedModel):
         # Based on Hacker News Ranking Algorithm
         td = now() - self.created 
         age_hours = td.days * 24 + (float(td.seconds) / 3600)  
-        return (self.interest_poll.count_votes()) / pow(age_hours + 2, 0.5)
+        return (self.count_like_votes()) / pow(age_hours + 2, 0.5)
+
+
+    def count_like_votes(self):
+        return self.likevote_set.count()
+
+    def count_abuse_votes(self):
+        return self.abusevote_set.count()        
 
 
 
-class Choice(TimeStampedModel):
-    poll = models.ForeignKey(MultiChoicePoll)
-    choice = models.CharField(max_length=255)
-    pos = models.SmallIntegerField(default=0)
+# class Choice(TimeStampedModel):
+#     poll = models.ForeignKey(MultiChoicePoll)
+#     choice = models.CharField(max_length=255)
+#     pos = models.SmallIntegerField(default=0)
 
-    class Meta:
-        ordering = ['pos']
+#     class Meta:
+#         ordering = ['pos']
 
-    def __unicode__(self):
-        return self.choice
+#     def __unicode__(self):
+#         return self.choice
 
-    def count_votes(self):
-        return self.multichoicevote_set.count()
+#     def count_votes(self):
+#         return self.multichoicevote_set.count()
 
 class VoteBase(TimeStampedModel):
     user = models.ForeignKey(User)    
@@ -132,20 +150,41 @@ class VoteBase(TimeStampedModel):
 
     class Meta:
         abstract = True
-        unique_together = (('user', 'poll'))
+        # unique_together = (('user', 'poll'))
 
-class MultiChoiceVote(VoteBase):
-    poll = models.ForeignKey(MultiChoicePoll)
-    choice = models.ForeignKey(Choice)
+# class MultiChoiceVote(VoteBase):
+#     poll = models.ForeignKey(MultiChoicePoll)
+#     choice = models.ForeignKey(Choice)
 
-    def __unicode__(self):
-        return u'Vote for %s' % (self.choice)
+#     def __unicode__(self):
+#         return u'Vote for %s' % (self.choice)
 
-class SingleChoiceVote(VoteBase):
-    poll = models.ForeignKey(SingleChoicePoll)
+# class SingleChoiceVote(VoteBase):
+#     poll = models.ForeignKey(SingleChoicePoll)
 
-    def __unicode__(self):
-        return u'Vote for %s' % (self.choice)        
+    # def __unicode__(self):
+    #     return u'Vote for %s' % (self.choice)        
+
+
+class LevelVote(VoteBase):
+    BEGINNER = 'BR'
+    INTERMEDIATE = 'IN'
+    ADVANCED = 'AD'
+    LEARN_LEVEL_CHOICES = (
+        (BEGINNER, 'Beginner'),
+        (INTERMEDIATE, 'Intermediate'),
+        (ADVANCED, 'Advanced'),
+    )
+    learn_level = models.CharField(max_length = 2, choices = LEARN_LEVEL_CHOICES)
+    link = models.ForeignKey(Link)
+
+class LikeVote(VoteBase):
+    shared_bookmark = models.ForeignKey(SharedBookmark)
+
+class AbuseVote(VoteBase):
+    shared_bookmark = models.ForeignKey(SharedBookmark)
+
+
 
 
 
