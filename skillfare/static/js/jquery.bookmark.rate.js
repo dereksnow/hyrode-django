@@ -7,16 +7,13 @@ $(document).ready(function() {
         score: $(this).children("span:first").text(),
         click: function(score, evt) {
             var vote_url = "/bookmark/rate/" + $(this).attr('id') + "/" + score + "/";
-            $.ajax({
-              url: vote_url,
-              success: function(){
+            $.post(vote_url, function(){
                 alert('vote successful');
-              }, 
-              error: function(jqXHR, textStatus, errorThrown){
-                alert("\ntextStatus: " + textStatus + "\nerrorThrown: " + errorThrown)
-              }
-            });
+              }).fail(function(jqXHR, textStatus, errorThrown){
+                  alert("\ntextStatus: " + textStatus + "\nerrorThrown: " + errorThrown);});
         }
       });
     });
 });
+
+
