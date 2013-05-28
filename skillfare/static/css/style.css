@@ -117,7 +117,7 @@ a {
     padding: 10px;
 }
 
-span + span {
+span + span:not(.icon-bar) {
     margin-left: 10px;
 }
 

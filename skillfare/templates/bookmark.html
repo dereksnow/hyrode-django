@@ -42,14 +42,10 @@
 </div>
 {% endif %}
 
-
-
-
-
 <div>
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'BR' %}?next={{request.path}}">beg</a>  {{ bookmark.link.count_beginner_votes }}
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'IN' %}?next={{request.path}}">int</a>  {{ bookmark.link.count_intermediate_votes }}
-    <a href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'AD' %}?next={{request.path}}">adv</a>  {{ bookmark.link.count_advanced_votes }}
+    <a class="beginner" href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'BR' %}?next={{request.path}}">beg</a>  <span class="BR">{{ bookmark.link.count_beginner_votes }}</span>
+    <a class="intermediate" href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'IN' %}?next={{request.path}}">int</a>  <span class="IN">{{ bookmark.link.count_intermediate_votes }}</span>
+    <a class="advanced" href="{% url 'bookmarks.views.level_vote' bookmark.link.id 'AD' %}?next={{request.path}}">adv</a>  <span class="AD">{{ bookmark.link.count_advanced_votes }}</span>
 </div>
 
 <hr>

@@ -34,20 +34,55 @@ $.ajaxSetup({
     }
 });
 
-function update_count() {
+function update_like_count() {
     var count = $(this).parents("article").find("span.interest_count");
-    var temp = $(this).parent().next($("span a.more"));
     var id = $(this).closest("div").find("a.more").attr("href").match(/\/sharedbookmark\/detail\/([0-9]+)/)[1];
     var url = "/bookmark/interested/" + id + "/";
     $.post(url, function (result) {
-        count.text(result);
+        if (result == -1)
+        {
+            alert("Previously voted");
+        }
+        else
+        {
+            count.text(result);
+        }
+        
     });
     return false;
 };
 
 $(document).ready(function () {
-    $("ul.bookmarks .interested").click(update_count);
+    $("ul.bookmarks .interested").click(update_like_count);
 });
 
+function update_level_count(level) {
+    var count = $(this).next();
+    var id = $(this).attr("href").match(/\/bookmark\/level_vote\/([0-9]+)/)[1];
+    var url = "/bookmark/level_vote/" + id + "/" + count.attr('class') + "/";
+    $.post(url, function (result) {
+        if (result == -1)
+        {
+            alert("Previously voted");
+        }   
+        else
+        {
+            count.text(result);    
+        }
+        
+    }).fail(function(jqXHR, textStatus, errorThrown){
+                alert("\ntextStatus: " + textStatus + "\nerrorThrown: " + errorThrown);});
+    return false;
+};
 
+$(document).ready(function () {
+    $("ul.bookmarks .beginner").click(update_level_count);
+});
+
+$(document).ready(function () {
+    $("ul.bookmarks .intermediate").click(update_level_count);
+});
+$(document).ready(function () {
+    $("ul.bookmarks .advanced").click(update_level_count);
+});
 

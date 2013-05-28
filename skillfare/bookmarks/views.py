@@ -120,7 +120,9 @@ def interest_vote(request, pk):
         try:
             #SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.interest_poll)            
             LikeVote.objects.get(user = request.user, shared_bookmark = shared_bookmark)
-        except LevelVote.DoesNotExist:            
+            if request.is_ajax():
+                return HttpResponse(-1)
+        except LikeVote.DoesNotExist:            
             LikeVote.objects.create(user = request.user, ip = ip, shared_bookmark = shared_bookmark)
 
             if request.is_ajax():
@@ -166,8 +168,21 @@ def level_vote(request, pk, level):
     if LevelVote.objects.filter(link = link, ip=ip).count() <= 5:        
         try:        
             LevelVote.objects.get(user = request.user, link = link)
+            if request.is_ajax():
+                return HttpResponse(-1)
         except LevelVote.DoesNotExist:
             LevelVote.objects.create(user = request.user, ip = ip, learn_level = level, link = link)
+            if request.is_ajax():
+                if level == 'BR':
+                    count = link.count_beginner_votes()
+                elif level == 'IN':
+                    count = link.count_intermediate_votes()
+                elif level == 'AD':
+                    count = link.count_advanced_votes()
+                else:
+                    raise Http404 
+
+                return HttpResponse(count)
 
 
     return HttpResponseRedirect(redirect_to)
