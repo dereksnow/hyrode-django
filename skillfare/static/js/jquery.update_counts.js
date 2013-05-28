@@ -48,7 +48,8 @@ function update_like_count() {
             count.text(result);
         }
         
-    });
+    }).fail(function(jqXHR, textStatus, errorThrown){
+                alert("\ntextStatus: " + textStatus + "\nerrorThrown: " + errorThrown);});
     return false;
 };
 
