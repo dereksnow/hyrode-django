@@ -58,6 +58,11 @@ urlpatterns = patterns('',
 
     url(r'^accounts/', include('password_validation.urls')),
 
+    # override logout mapping provided in django-registration
+    # logout will redirect to landing page
+    url(r'^accounts/logout/$', 'django.contrib.auth.views.logout',
+                          {'next_page': '/'}),
+
 	url(r'^accounts/', include('registration.backends.default.urls')),
 
 	# Account management

@@ -1,58 +1,62 @@
 {% extends "base.html" %}
+{% load i18n %}
 
-{% block title %}Sign up{% endblock %}
+{% block title %}Register{% endblock %}
 
 {% block content %}
 
-  {% if form.errors %}
-  <p class="errors">Please correct the errors below: {{ form.non_field_errors }}</p>
-  {% endif %}
+<div class="row-fluid">
+    <div class="span5">
+        <form class="form" method="post" action="">{% csrf_token %}
+            <fieldset>
+                <legend>{% trans "Register" %}</legend>
+                <div class="well">
 
-  <h1>Create an account</h1>
-  
-  <form method="post" action="" class="wide">
-	{% csrf_token %}
-    <p>
-      <label for="id_username">Username:</label>
-      {% if form.username.errors %}
-        <p class="errors">{{ form.username.errors.as_text }}</p>
-      {% endif %}
-      {{ form.username }}
-    </p>
-    <p>
-      <label for="id_email">Email address:</label>
-      {% if form.email.errors %}
-        <p class="errors">{{ form.email.errors.as_text }}</p>
-      {% endif %}
-      {{ form.email }}
-    </p>
-    <p>
-      <label for="id_password1">Password:</label>
-      {% if form.password1.errors %}
-        <p class="errors">{{ form.password1.errors.as_text }}</p>
-      {% endif %}
-      {{ form.password1 }}
-    </p>
-    <p>
-      <label for="id_password2">Password Confirmation:</label>
-      {% if form.password2.errors %}
-        <p class="errors">{{ form.password2.errors.as_text }}</p>
-      {% endif %}
-      {{ form.password2 }}
-    </p>
-    <p class="submit"><input type="submit" value="Register"></p>
-  </form>
-  
-{% endblock %}
+                    <div class="alert alert-info">{% trans "Complete all fields below. You'll emailed instructions on how activate your account." %}</div>
 
-{% block content-related %}
-<p>Fill out the form to the left (all fields are required), and your
-account will be created; you'll be sent an email with instructions on how
-to finish your registration.</p>
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-error">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <label for="id_username"><strong>{% trans "Username" %}</strong></label>
+                    {% if form.username.errors %}
+                        <div class="alert alert-error">{{ form.username.errors }}</div>
+                    {% endif %}                    
+                    <div class="input-prepend">
+                        <span class="add-on"><i class="icon-user"></i></span>
+                        <input id="id_username" name="username" type="text" placeholder="username">
+                    </div>
+                    <label for="id_email"><strong>{% trans "Email" %}</strong></label>
+                    {% if form.email.errors %}
+                        <div class="alert alert-error">{{ form.email.errors }}</div>
+                    {% endif %}                    
+                    <div class="input-prepend">
+                        <span class="add-on"><i class="icon-envelope"></i></span>
+                        <input id="id_email" name="email" type="email" placeholder="email">
+                    </div>                    
+                    <label for="id_password1"><strong>{% trans "Password" %}</strong></label>
+                    {% if form.password1.errors %}
+                        <div class="alert alert-error">{{ form.password1.errors }}</div>
+                    {% endif %}                    
+                    <div class="input-prepend">
+                        <span class="add-on"><i class="icon-key"></i></span>
+                        <input id="id_password1" name="password1" type="password" placeholder="password">
+                    </div>   
+                    <label for="id_password2"><strong>{% trans "Confirm Password" %}</strong></label>
+                    {% if form.password2.errors %}
+                        <div class="alert alert-error">{{ form.password2.errors }}</div>
+                    {% endif %}                    
+                    <div class="input-prepend">
+                        <span class="add-on"><i class="icon-key"></i></span>
+                        <input id="id_password2" name="password2" type="password" placeholder="confirm password">
+                    </div> 
+                    <div>   
+                        <button type="submit" class="btn btn-large btn-primary">{% trans "Register" %}</button>
+                    </div>                                         
 
-<p>We'll only use your email to send you signup instructions. We hate spam
-as much as you do.</p>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
 
-<p>This account will let you log into the ticket tracker, claim tickets,
-and be exempt from spam filtering.</p>
 {% endblock %}

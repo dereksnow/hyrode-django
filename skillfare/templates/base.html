@@ -16,7 +16,12 @@
         {% block external %}
         {% endblock %}
     </head>
-    <body>
+
+    {% if palette %}
+        <body class="palette">
+    {% else %}
+        <body>
+    {% endif %}
         <div class="navbar navbar-inverse navbar-fixed-top">
                 <div class="navbar-inner">
                     <div class="container">
@@ -39,11 +44,11 @@
                                         <b class="caret"></b>
                                     </a>
                                     <ul class="dropdown-menu" id="swatch-menu">
-                                        <li><a href="{% url 'auth_logout' %}"><i class="icon-signout"></i> logout</a></li>
+                                        <li><a href="{% url 'auth_logout' %}"><i class="icon-signout"></i> sign out</a></li>
                                     </ul>
                                 </li>
                             {% else %}
-                                <li><a href="{% url 'auth_login' %}">login</a></li> 
+                                <li><a href="{% url 'auth_login' %}">sign in</a></li> 
                                 <li><a href="{% url 'skillfare_registration_register' %}">register</a></li>            
                             {% endif %}
                         </div><!--/.nav-collapse -->
@@ -68,6 +73,6 @@
         <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/bootstrap.js"></script>
         <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.raty.js"></script>
         <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.bookmark.rate.js"></script>
-        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.update_counts.js"></script>
+        <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}js/jquery.update_counts.js"></script>    
     </body>
 </html>

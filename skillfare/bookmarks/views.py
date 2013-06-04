@@ -41,6 +41,7 @@ def main_page(request):
         'bookmarks': shared_bookmarks,
         'show_tags': True,
         'show_user': True,
+        'palette': True
     }
     return render(request, 'main_page.html', variables)
 

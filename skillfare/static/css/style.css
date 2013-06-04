@@ -8,6 +8,11 @@
   }
 }
 
+ul.errorlist {
+    list-style-type: none;
+    margin-left: 0px;
+}
+
 .bookmark {
     background-color: #ffffff;
     background-image:url('../images/top-border.png');    
@@ -44,8 +49,12 @@ body {
     padding-top: 60px;
     padding-bottom: 40px;
     font-family: "Roboto", Helvetica, Arial, sans-serif;
-    background-image:url('../images/grey-skies.png');    
+    /*background-image:url('../images/grey-skies.png');*/    
     /*background-color: #5E5E5E;*/
+}
+
+body.palette {
+    background-image:url('../images/grey-skies.png');    
 }
 
 h1,
@@ -97,7 +106,7 @@ textarea {
   border-color: #78ada6;
 }
 
-a {
+article a {
   color: #404040;
   /*text-shadow: 0 1px 0 #E0E0E0;*/
   text-decoration: none;
@@ -127,4 +136,12 @@ article hr {
 
 article div + div:not(.span6){
     margin-top: 7px;
+}
+
+.well {
+    background-color: #FAFAFA;
+}
+
+.top-roomspace {
+    margin-top: 10px;
 }

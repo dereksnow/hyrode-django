@@ -1,8 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Registration complete{% endblock %}
+{% block title %}{% trans "Registration Complete" %}{% endblock %}
 
 {% block content %}
-<h1>Check your email</h1>
-<p>An activation link has been sent to the email address you supplied, along with instructions for activating your account.</p>
+<div class="row-fluid">
+    <div class="span6">
+        <div class="alert alert-info">
+            <h2>{% trans "Check Your Email To Activate Your Account" %}</h2>
+            <p>{% blocktrans %} To complete your {{ site.name }} account activation, you will need to click on the activation link in the email that has been sent to you. {% endblocktrans %}</p>
+            <p>{% blocktrans %} If an email from {{ site.name }} doesn't appear shortly, please check your spam folder. Some spam filters may modify the email, so it is recommended that you copy any spam message to your inbox before clicking on the activation link.{% endblocktrans %}</p>
+        </div>
+    </div>
+</div>
 {% endblock %}
