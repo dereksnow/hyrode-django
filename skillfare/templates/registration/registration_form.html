@@ -12,7 +12,7 @@
                 <legend>{% trans "Register" %}</legend>
                 <div class="well">
 
-                    <div class="alert alert-info">{% trans "Complete all fields below. You'll emailed instructions on how activate your account." %}</div>
+                    <div class="alert alert-info">{% trans "All fields required." %}</div>
 
                     {% if form.non_field_errors %}
                         <div class="alert alert-error">{{ form.non_field_errors }}</div>
@@ -23,7 +23,13 @@
                     {% endif %}                    
                     <div class="input-prepend">
                         <span class="add-on"><i class="icon-user"></i></span>
-                        <input id="id_username" name="username" type="text" placeholder="username">
+                        <input id="id_username" name="username" type="text" 
+                            {% if form.username.value %}
+                                value="{{form.username.value}}"
+                            {% else %}
+                                placeholder="username"
+                            {% endif %}
+                        >
                     </div>
                     <label for="id_email"><strong>{% trans "Email" %}</strong></label>
                     {% if form.email.errors %}
@@ -31,7 +37,13 @@
                     {% endif %}                    
                     <div class="input-prepend">
                         <span class="add-on"><i class="icon-envelope"></i></span>
-                        <input id="id_email" name="email" type="email" placeholder="email">
+                        <input id="id_email" name="email" type="email" 
+                            {% if form.email.value %}
+                                value="{{form.email.value}}"
+                            {% else %}                            
+                                placeholder="email"
+                            {% endif %}
+                        >
                     </div>                    
                     <label for="id_password1"><strong>{% trans "Password" %}</strong></label>
                     {% if form.password1.errors %}
