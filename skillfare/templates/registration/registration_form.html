@@ -17,7 +17,7 @@
                     {% if form.non_field_errors %}
                         <div class="alert alert-error">{{ form.non_field_errors }}</div>
                     {% endif %}
-                    <label for="id_username"><strong>{% trans "Username" %}</strong></label>
+                    <label for="id_username" class="control-label">{% trans "Username" %}</label>
                     {% if form.username.errors %}
                         <div class="alert alert-error">{{ form.username.errors }}</div>
                     {% endif %}                    
@@ -31,7 +31,7 @@
                             {% endif %}
                         >
                     </div>
-                    <label for="id_email"><strong>{% trans "Email" %}</strong></label>
+                    <label for="id_email" class="control-label">{% trans "Email" %}</label>
                     {% if form.email.errors %}
                         <div class="alert alert-error">{{ form.email.errors }}</div>
                     {% endif %}                    
@@ -45,7 +45,7 @@
                             {% endif %}
                         >
                     </div>                    
-                    <label for="id_password1"><strong>{% trans "Password" %}</strong></label>
+                    <label for="id_password1" class="control-label">{% trans "Password" %}</label>
                     {% if form.password1.errors %}
                         <div class="alert alert-error">{{ form.password1.errors }}</div>
                     {% endif %}                    
@@ -53,7 +53,7 @@
                         <span class="add-on"><i class="icon-key"></i></span>
                         <input id="id_password1" name="password1" type="password" placeholder="password">
                     </div>   
-                    <label for="id_password2"><strong>{% trans "Confirm Password" %}</strong></label>
+                    <label for="id_password2" class="control-label">{% trans "Confirm Password" %}</label>
                     {% if form.password2.errors %}
                         <div class="alert alert-error">{{ form.password2.errors }}</div>
                     {% endif %}                    
