@@ -1,4 +1,2 @@
-<form id="save-form" method="post" action="{% url 'bookmarks.views.bookmark_save' %}">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="save" />
-</form>
+{% load crispy_forms_tags %}
+{% crispy form %}

@@ -171,6 +171,7 @@ THIRD_PARTY_APPS = (
     'haystack',
     'djangoratings',
     'disqus',
+    'crispy_forms',
 )
 
 # Apps specific for this project go here.
