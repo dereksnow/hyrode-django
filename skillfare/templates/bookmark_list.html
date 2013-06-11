@@ -1,25 +1,18 @@
 {% if bookmarks %}
-<div class="row-fluid">
-    <ul class="bookmarks thumbnails">
-        {% for bookmark in bookmarks %}
-            {% if request.user.username == username or not bookmark.personal %}
-                {% if forloop.counter0 > 1 and forloop.counter0|divisibleby:4 %}
-                    <li class="span3 firstcol">                    
-                {% else %}
-                    <li class="span3">                        
-                {% endif %}
-                    <article class="thumbnail bookmark">
-                        {% include "bookmark.html" %}
+<div id="bookmarks" class="row">
+    {% for bookmark in bookmarks %}
+        {% if request.user.username == username or not bookmark.personal %}
+            <article class="thumbnail bookmark item span3">
+                {% include "bookmark.html" %}
 
-                        {% if show_single_edit %}
-                            <a href="{% url 'bookmarks.views.bookmark_save' %}?url={{bookmark.link.url}}" class="edit">edit</a>
-                        {% endif %}
-                    </article>
-                </li>
-            {% endif %}
-        {% endfor %}
-    </ul>
+                {% if show_single_edit %}
+                    <a href="{% url 'bookmarks.views.bookmark_save' %}?url={{bookmark.link.url}}" class="edit">edit</a>
+                {% endif %}
+            </article>
+        {% endif %}
+    {% endfor %}
 </div>
+
 {% else %}
     <p>No bookmarks found.</p>
 {% endif %}
