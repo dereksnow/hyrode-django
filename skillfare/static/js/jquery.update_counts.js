@@ -54,7 +54,7 @@ function update_like_count() {
 };
 
 $(document).ready(function () {
-    $("ul.bookmarks .interested").click(update_like_count);
+    $(".interested").click(update_like_count);
 });
 
 function update_level_count(level) {
@@ -77,13 +77,13 @@ function update_level_count(level) {
 };
 
 $(document).ready(function () {
-    $("ul.bookmarks .beginner").click(update_level_count);
+    $(".beginner").click(update_level_count);
 });
 
 $(document).ready(function () {
-    $("ul.bookmarks .intermediate").click(update_level_count);
+    $(".intermediate").click(update_level_count);
 });
 $(document).ready(function () {
-    $("ul.bookmarks .advanced").click(update_level_count);
+    $(".advanced").click(update_level_count);
 });
 
