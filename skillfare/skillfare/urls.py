@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, include, url
 from bookmarks.views import *
+from bookmarks.models import Bookmark
 #from django.contrib.auth import views as auth_views
 #from password_validation.forms import ValidPasswordRegistrationForm, ValidPasswordChangeForm
 #from registration.views import register
@@ -14,14 +15,25 @@ urlpatterns = patterns('',
 	# Browsing
 	url(r'^$', main_page),
 	url(r'^user/([\w.@+-]+)/$', user_page),
-	url(r'^bookmarks/tag/([-\w]+)/$', tag_page),
+    url(r'^user/([\w.@+-]+)/create_path/$', view=create_path, name='create_path'),
+    # url(r'^user/([\w.@+-]+)/path_save/$', view=path_save, name='path_save'),
+    url(r'^path/save/$', view=path_save, name='path_save'),
+	url(r'^bookmarks/tag/([-\w]+)/$', view=tag_page),
     url(r'^delete/(?P<pk>\d+)/$', view=delete_bookmark, name='bookmark_delete'), 
 
-    url(r'bookmark/interested/(?P<pk>\d+)/$', interest_vote),
-    url(r'bookmark/report_abuse/(?P<pk>\d+)/$', report_abuse_vote),
+    url(r'^search/$', view=search),
+
+    url(r'^bookmark/interested/(?P<pk>\d+)/$', interest_vote, {'model': SharedBookmark}, name="interest_vote_bookmark"),
+    url(r'^path/interested/(?P<pk>\d+)/$', interest_vote, {'model': SharedPath}, name="interest_vote_path"),
+
+    url(r'bookmark/report_abuse/(?P<pk>\d+)/$', report_abuse_vote, {'model': SharedBookmark}, name="abuse_vote_bookmark"),
+    url(r'path/report_abuse/(?P<pk>\d+)/$', report_abuse_vote, {'model': SharedPath}, name="abuse_vote_path"),
 
 	url(regex=r'^bookmark/detail/(?P<pk>\d+)/(?P<slug>[-\w]*)/?$', view=bookmark_detail, 
 		name='bookmark_detail'),
+
+    url(regex=r'^path/detail/(?P<pk>\d+)/(?P<slug>[-\w]*)/?$', view=path_detail, 
+        name='path_detail'),    
 
     url(regex=r'^sharedbookmark/detail/(?P<pk>\d+)/(?P<slug>[-\w]*)/?$', view=shared_bookmark_detail, 
         name='sharedbookmark_detail'),    
@@ -35,6 +47,12 @@ urlpatterns = patterns('',
         'model': 'link',
         'field_name': 'rating',
     }, name='bookmark_rate'),    
+
+    url(r'^path/rate/(?P<object_id>\d+)/(?P<score>\d+)/', AddRatingFromModel(), {
+        'app_label': 'bookmarks',
+        'model': 'path',
+        'field_name': 'rating',
+    }, name='path_rate'),        
 
 	# Search
 	url(r'^bookmarks/search/', include('haystack.urls')),

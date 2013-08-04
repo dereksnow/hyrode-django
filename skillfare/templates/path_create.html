@@ -6,7 +6,7 @@
 {% block user %}
 {% endblock %}    
 {% block title %}
-	User: {{ user.username }}
+    User: {{ user.username }}
 {% endblock %}
 {% block head %}
 {% endblock %}
@@ -26,41 +26,17 @@
             <strong>Two or more resources are required to create a path.</strong> 
         </div>        
     {% endif %}
-    {% if personal_bookmarks %}    
-        <h2>Personal Bookmarks</h2>
-        {% for resource in personal_bookmarks %}
-            <article class="thumbnail bookmark item span3">
-                {% include "personal_bookmark.html" %}
-            </article>
-        {% endfor %}
-    {% endif %}
-    {% if personal_paths %}
-        <h2>Personal Paths</h2>
-        {% for resource in personal_paths %}
-            <article class="thumbnail path item span3">
-                {% include "personal_path.html" %}
-            </article>
-        {% endfor %}
-    {% endif %}
     {% if shared_bookmarks %}
     <div id="path_bookmarks" class="row">
         <h2>Shared Bookmarks</h2>
-        {% for resource in shared_bookmarks %}            
+        {% for resource in shared_bookmarks %}
             <article class="thumbnail bookmark item span3">
                 {% include "shared_bookmark.html" %}
             </article>
         {% endfor %}
     </div>
     {% endif %}
-    {% if shared_paths %}
-        <h2>Shared Paths</h2>    
-        {% for resource in shared_paths %}
-            <article class="thumbnail path item span3">
-                {% include "shared_path.html" %}
-            </article>
-        {% endfor %}
-    {% endif %}
-
+ 
 {% endblock %}
 
 

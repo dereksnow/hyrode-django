@@ -1,3 +1,5 @@
+import time
+
 def get_ip(request):
     """Returns the IP of the request, accounting for the possibility of being
     behind a proxy.
@@ -9,3 +11,7 @@ def get_ip(request):
     else:
         ip = request.META.get("REMOTE_ADDR", "")
     return ip
+
+
+def content_ready(browser):
+    time.sleep(5)

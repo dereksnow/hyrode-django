@@ -36,8 +36,18 @@ $.ajaxSetup({
 
 function update_like_count() {
     var count = $(this).parents("article").find("span.interest_count");
-    var id = $(this).closest("div").find("a.more").attr("href").match(/\/sharedbookmark\/detail\/([0-9]+)/)[1];
-    var url = "/bookmark/interested/" + id + "/";
+
+    var type = $("span.resource-type").text();
+    var id = $(this).closest("div").find("a.more").attr("href").match(/\/sharedbookmark\/detail\/([0-9]+)/)[1];    
+    if (type === "path")
+    {
+        var url = "/path/interested/" + id + "/";
+    }
+    else
+    {
+        var url = "/bookmark/interested/" + id + "/";
+    }
+    
     $.post(url, function (result) {
         if (result == -1)
         {
@@ -76,14 +86,68 @@ function update_level_count(level) {
     return false;
 };
 
+function path_bookmark_ids() {
+    var ids = [];
+    $("span.bookmark-id").each(function() {
+        ids.push($(this).text());
+    });
+    return ids;
+
+};
+
 $(document).ready(function () {
     $(".beginner").click(update_level_count);
-});
-
-$(document).ready(function () {
     $(".intermediate").click(update_level_count);
-});
-$(document).ready(function () {
     $(".advanced").click(update_level_count);
-});
 
+    $("#path_bookmarks").bind( "mousedown", function (e) {
+            e.metaKey = true;
+    }).selectable({ filter: "article" });
+
+    $("#sort-step").hide();
+    $("#none-select").hide();
+
+
+    $("#next_path").click(function () {
+
+        // check that at least one bookmark is selected
+        if($(".ui-selected").length > 1) 
+        {
+            $("#select-step").hide();
+            $("#none-select").hide(); 
+            $("#sort-step").show();
+            $(".bookmark:not(.ui-selected)").remove();
+            $('article').removeClass('thumbnail').addClass('thumbnail-draggable');
+            $("#path_bookmarks").selectable("destroy");
+            $('#path_bookmarks').isotope('destroy');
+            $("#path_bookmarks").sortable();
+            $("#path_bookmarks").disableSelection();
+        }
+        else
+        {
+            $("#none-select").show();          
+        }
+    });
+
+    $("#next_path2").click(function (){
+        alert(path_bookmark_ids());
+        var url = "/path/save/" + 
+                  "?ids=" + path_bookmark_ids();
+
+        window.location.href = url;
+        
+        // $.ajax({
+        //     url: url, 
+        //     type: 'GET',
+        //     data: { ids: [path_bookmark_ids()] },
+        //     traditional: true
+        // }).done(function() { alert("success"); });
+    });
+
+    // $("#edit_save_path").click(function () {
+    //     var id =  
+    //     var url = "/user/" + dj_request_user + "/path_save/" +
+    //               "?edit=" + id;
+    // });
+
+});

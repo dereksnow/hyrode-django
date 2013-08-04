@@ -1,0 +1,67 @@
+{% load bookmarks_extras %}
+<span class="bookmark-id" style="display: none">{{resource.id}}</span>
+
+
+<div><a href="{{ resource.link.url }}" class="title">
+    {{ resource.title }}
+</a></div>
+<div class="thingrating" id="{{ resource.link.id }}"><span style="display:none;">{{ resource.link.rating.get_rating }}</span></div>
+
+
+{% if resource.features %}
+<div>
+
+{% for feature in resource.features.all %}
+    <span><i class="{{ feature.description|font_icon }} icon-large bookmark_icon_nolink"></i></span>
+{% endfor %}
+
+</div>
+{% endif %}
+
+<div>
+    <a class="beginner" href="{% url 'bookmarks.views.level_vote' resource.link.id 'BR' %}?next={{request.path}}">beg</a>  <span class="BR">{{ resource.link.count_beginner_votes }}</span>
+    <a class="intermediate" href="{% url 'bookmarks.views.level_vote' resource.link.id 'IN' %}?next={{request.path}}">int</a>  <span class="IN">{{ resource.link.count_intermediate_votes }}</span>
+    <a class="advanced" href="{% url 'bookmarks.views.level_vote' resource.link.id 'AD' %}?next={{request.path}}">adv</a>  <span class="AD">{{ resource.link.count_advanced_votes }}</span>
+</div>
+
+<hr>
+{% if show_tags %} 
+<div>           
+    {% if resource.tags %} 
+    <i class="icon-tags icon-large bookmark_icon_nolink"></i>                  
+        {% for tag in resource.tags.all %}
+            <a href="{% url 'bookmarks.views.tag_page' tag.slug %}">
+            {{ tag.name }}</a>{% if not forloop.last %},{% endif %}
+        {% endfor %}        
+    {% else %}
+        None.
+    {% endif %}
+</div>
+{% endif %}
+
+
+
+<div class="row-fluid">
+    <div class="span12">        
+        likes: <span class="interest_count">{{ resource.count_like_votes }}</span>
+
+        <span class="pull-right">     
+            <i class="icon-user"></i>
+            <a href="{% url 'bookmarks.views.user_page' resource.user.username %}"
+            class="username">
+            {{ resource.user.username }}</a>
+        </span>
+    </div>
+</div>
+
+
+{% if request.user.username == username and show_edit %}
+    <div class="row-fluid">
+        <div class="span12">
+            <a href="{% url 'bookmark_delete' resource.id %}?next={{request.path}}">delete</a>
+            <span class="pull-right">
+                <a href="{% url 'bookmarks.views.bookmark_save' %}?url={{resource.link.url}}" class="edit">edit</a>
+            </span>
+        </div>
+    </div>
+{% endif %}

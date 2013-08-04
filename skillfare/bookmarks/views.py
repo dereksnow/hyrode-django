@@ -2,19 +2,28 @@ import urllib
 from bs4 import BeautifulSoup
 # from selenium import webdriver
 # from selenium.webdriver.common.keys import Keys
+from spynner import Browser
+from pyquery import PyQuery
 
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.core import serializers
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
-from bookmarks.models import Bookmark, Link, LikeVote, AbuseVote, LevelVote
-from bookmarks.forms import BookmarkSaveForm, LinkSaveForm
+from bookmarks.models import SharedBookmark, Bookmark, Link, Path, SharedPath, LikeVote, AbuseVote, LevelVote
+from bookmarks.forms import BookmarkSaveForm, LinkSaveForm, PathSaveForm
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from taggit.models import Tag
 from django.views.generic import DetailView
 from bookmarks.models import Bookmark, SharedBookmark
 from bookmarks.utils import get_ip
+from itertools import chain
+from operator import attrgetter
+from django.db.models import Count
+import HTMLParser
+
+from django.contrib.contenttypes.models import ContentType
 
 
 def bookmark_detail(request, pk, slug = ''):
@@ -24,6 +33,15 @@ def bookmark_detail(request, pk, slug = ''):
     variables = {'bookmark': bookmark,
                  'hide_more': True}
     return render(request, 'detail.html', variables)
+
+def path_detail(request, pk, slug = ''):
+    path = get_object_or_404(Path, pk = pk)
+    if path.slug != slug:
+        return HttpResponseRedirect(reverse(path_detail, args=[pk, path.slug]))
+
+    bookmarks = Bookmark.objects.filter(pk__in = path.bookmarks.all)
+    variables = {'bookmarks': bookmarks}
+    return render(request, 'bookmark_list.html', variables)
 
 def shared_bookmark_detail(request, pk, slug = ''):
     shared_bookmark = get_object_or_404(SharedBookmark, pk = pk)
@@ -36,14 +54,39 @@ def shared_bookmark_detail(request, pk, slug = ''):
     return render(request, 'detail.html', variables)
 
 def main_page(request):
-    shared_bookmarks = Bookmark.objects.filter(personal=False).order_by('-sharedbookmark__hot_score')[:20]
+    shared_bookmarks = SharedBookmark.objects.all()
+    shared_paths = SharedPath.objects.all()
+    resources = sorted(chain(shared_bookmarks, shared_paths), key=attrgetter('created'), reverse=False)
     variables = {
-        'bookmarks': shared_bookmarks,
+        # 'bookmarks': shared_bookmarks,
+        'resources': resources,
         'show_tags': True,
         'show_user': True,
-        'palette': True
+        'no_form_container': True
     }
     return render(request, 'main_page.html', variables)
+
+def search(request):
+    if request.method == 'GET':
+        if 'query' in request.GET:
+            query = request.GET['query'].strip()
+            if query:     
+
+                shared_bookmarks = SharedBookmark.objects.search(query)
+                shared_paths = SharedPath.objects.search(query)
+                tag_query = query.split()
+                tagged_shared_bookmarks = SharedBookmark.objects.filter(bookmark__tags__name__in = tag_query).distinct()
+                tagged_shared_paths = SharedPath.objects.filter(path__tags__name__in = tag_query).distinct()
+
+                
+                resources = chain(shared_bookmarks, shared_paths, tagged_shared_bookmarks, tagged_shared_paths)
+                variables = {        
+                    'resources': resources,
+                    'show_tags': True,
+                    'show_user': True,
+                    'palette': True
+                }
+                return render(request, 'main_page.html', variables)
 
 @login_required
 def user_page(request, username):    
@@ -78,18 +121,47 @@ def user_page(request, username):
     else:        
         show_edit = request.REQUEST.get('show_edit', False) and request.user.username == username
         user = get_object_or_404(User, username=username)
-        #shared_bookmarks = SharedBookmark.objects.filter(bookmark__user=user).order_by('-hot_score')         
-        bookmarks = Bookmark.objects.filter(user=user)
- 
+
+        personal_bookmark = None
+        personal_paths = None
+        shared_bookmarks = SharedBookmark.objects.filter(bookmark__user = user)
+        shared_paths = SharedPath.objects.filter(path__user = user)
+
+        if request.user.username == username:
+            personal_bookmarks = Bookmark.objects.filter(user = user, personal = True)
+            personal_paths = Path.objects.filter(user = user, personal = True)
+        
         #bookmarks = user.bookmark_set.order_by('-id')
         variables = {
             'username': username, 
-            'bookmarks': bookmarks, 
-            'show_tags': True,
+            'shared_bookmarks': shared_bookmarks, 
+            'shared_paths': shared_paths,
             'show_edit': show_edit,
             'show_single_edit': user == request.user
         }
+
         return render(request, 'user_page.html', variables)
+
+@login_required
+def create_path(request, username):
+    user = get_object_or_404(User, username=username)
+    # if user != request.user:
+    #     raise Http404
+
+
+    shared_bookmarks = SharedBookmark.objects.filter(bookmark__user = user)
+
+    # if request.user.username == username:
+    #     personal_bookmarks = Bookmark.objects.filter(user = user, personal = True)    
+
+    variables = {
+        'shared_bookmarks': shared_bookmarks, 
+        'path': True
+    }
+    # Explicit set personal_bookmarks and personal_paths to None
+    # for other users   s 
+    # variables.setdefault(personal_bookmarks, None)
+    return render(request, 'path_create.html', variables)
 
 @login_required
 def delete_bookmark(request, pk):
@@ -108,51 +180,58 @@ def delete_bookmark(request, pk):
 
 
 @login_required
-def interest_vote(request, pk):
-    redirect_to = request.REQUEST.get('next', '')
+def interest_vote(request, pk, model):
 
-    shared_bookmark = get_object_or_404(SharedBookmark, pk=pk)
+    redirect_to = request.REQUEST.get('next', '')   
+    print model
+    print pk 
+    resource = get_object_or_404(model, pk=pk)   
+    resource_type = ContentType.objects.get_for_model(resource)    
 
     ip = get_ip(request)
 
-    #if SingleChoiceVote.objects.filter(poll = shared_bookmark.interest_poll, ip = ip).count() <= 5:
-    if LikeVote.objects.filter(shared_bookmark = shared_bookmark, ip = ip).count() < 5:        
-        
-        try:
-            #SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.interest_poll)            
-            LikeVote.objects.get(user = request.user, shared_bookmark = shared_bookmark)
-            if request.is_ajax():
+    # if UserVote.objects.filter(shared_bookmark = shared_bookmark, ip = ip).count() < 5:            
+    if LikeVote.objects.filter(ip = ip, content_type__pk = resource_type.id, object_id = resource.id).count() < 5:        
+        try:        
+            # UserVote.objects.get(user = request.user, shared_bookmark = shared_bookmark)        
+            LikeVote.objects.get(user = request.user, content_type__pk = resource_type.id, object_id = resource.id)            
+            if request.is_ajax():                
                 return HttpResponse(-1)
         except LikeVote.DoesNotExist:            
-            LikeVote.objects.create(user = request.user, ip = ip, shared_bookmark = shared_bookmark)
-
+            # UserVote.objects.create(user = request.user, ip = ip, shared_bookmark = shared_bookmark)
+            LikeVote.objects.create(content_object = resource, user = request.user, ip = ip)
             if request.is_ajax():
-                return HttpResponse(shared_bookmark.count_like_votes())
+                return HttpResponse(resource.like_votes.count())
 
     return HttpResponseRedirect(redirect_to)
 
 
 @login_required
-def report_abuse_vote(request, pk):
+def report_abuse_vote(request, pk, model):
     redirect_to = request.REQUEST.get('next', '')
 
-    shared_bookmark = get_object_or_404(SharedBookmark, pk=pk)
+    resource = get_object_or_404(model, pk=pk)
+    resource_type = ContentType.objects.get_for_model(resource)
 
     ip = get_ip(request)
 
     #if SingleChoiceVote.objects.filter(poll = shared_bookmark.report_abuse_poll, ip = ip).count() <= 5:
-    if AbuseVote.objects.filter(shared_bookmark = shared_bookmark, ip = ip).count() < 5:   
+    if AbuseVote.objects.filter(ip = ip, content_type__pk = resource_type.id, object_id = resource.id).count() < 5:
         try:
             #SingleChoiceVote.objects.get(user = request.user, poll = shared_bookmark.report_abuse_poll)
-            AbuseVote.objects.get(user = request.user, shared_bookmark = shared_bookmark)
-        except AbuseVote.DoesNotExist:
-            if shared_bookmark.count_abuse_votes() < 5:
-                AbuseVote.objects.create(user = request.user, ip = ip, shared_bookmark = shared_bookmark)
+            print u' abuse votes %s ' % (resource.abuse_votes.count())   
+            print u' like votes %s ' % (resource.like_votes.count())              
+            AbuseVote.objects.get(user = request.user, content_type__pk = resource_type.id, object_id = resource.id)
+        except AbuseVote.DoesNotExist: 
+            if resource.abuse_votes.count() < 5:
+                AbuseVote.objects.create(content_object = resource, user = request.user, ip = ip)
                 if request.is_ajax():
-                    return HttpResponse(shared_bookmark.count_abuse_votes())
+                    return HttpResponse(resource.abuse_votes.count())
             else :
-                shared_bookmark.bookmark.delete()                
+                resource.bookmark.delete()                
                             
+    print u' abuse votes %s ' % (resource.abuse_votes.count())   
+    print u' like votes %s ' % (resource.like_votes.count()) 
     return HttpResponseRedirect(redirect_to)
 
 
@@ -215,7 +294,7 @@ def bookmark_save_link(request):
 
 
 @login_required
-def bookmark_save(request):
+def bookmark_save(request):    
     if request.method == 'POST':
         form = BookmarkSaveForm(request.POST)
         if form.is_valid():
@@ -243,11 +322,18 @@ def bookmark_save(request):
                 if not bookmark_created:
                     try:
                         shared = SharedBookmark.objects.get(bookmark = bookmark)
-                        shared.delete()
+                        if shared.like_votes.count() < 4:
+                            shared.delete()
+                            # need to possibly add return value here to indicate
+                            # successful removal
+                        else:
+                            pass
+                            # need to possibly add return value here to indicate
+                            # that the bookmark has too many likes to remove                                                        
                     except SharedBookmark.DoesNotExist:
                         pass
                 # else bookmark just created 
-                    # no need to check for existing shared_bookmark, since
+                    # no need to check for existing SharedBookmark, since
                     # bookmark was just created
 
                 bookmark.personal = True
@@ -264,10 +350,10 @@ def bookmark_save(request):
         else:
             if request.ajax():
                 return HttpResponse('failure')                
-    else:        
+    else:     
         data = {}
         edit_bookmark = False
-        if 'url' in request.GET or 'id' in request.GET:
+        if 'url' in request.GET or 'id' in request.GET:            
             if 'url' in request.GET:
                 edit_bookmark = True
                 url = request.GET['url']
@@ -325,6 +411,9 @@ def bookmark_save(request):
         else:
             link = request.session.get('link', None) 
             if link:
+                #################################################
+                # Look at possibly using phantomjs to get title
+                ##################################################
                 # driver = webdriver.Firefox()
                 # driver.get(link.url)
                 # title = driver.title
@@ -339,23 +428,189 @@ def bookmark_save(request):
     else:
         return render(request, 'bookmark_save.html', variables)
 
-# def tag_page(request, tag_name):
-#   #tag = get_object_or_404(Tag, name=tag_name)
-#   bookmarks = Bookmark.objects.filter(tags__name=tag_name).order_by('-modified')
-#   variables = {'bookmarks': bookmarks, 'tag_name': tag_name,
-#                   'show_tags': True, 'show_user': True}
-#   return render(request, 'tag_page.html', variables)
+@login_required
+def path_save(request):
+    # if user != request.user.username:
+    #     raise PermissionDenied
+    if request.method == 'POST':
+        form = PathSaveForm(request.POST)
+        if form.is_valid():
+            path, path_created = _path_save(request, form)
 
+            if not form.cleaned_data['personal']:
+
+               # retrieve list of personal bookmarks
+                personal_bookmarks = Bookmark.objects.filter(pk__in = request.session['ids_list'], personal=True)
+
+                # clean up session
+                if 'ids_list' in request.session:
+                    del request.session['ids_list']
+
+                # if path is public, then bookmarks in path
+                # need to be visible to all. Ensure warning to user
+                # upon creating a public path that contains personal 
+                # bookmarks  
+                for bookmark in personal_bookmarks:
+                    try:
+                        SharedBookmark.objects.get(bookmark = bookmark)
+                    except SharedBookmark.DoesNotExist:
+                        _save_sharedbookmark(request, bookmark)                
+
+                # create a shared_path for newly created public path
+                if path_created:
+                    _save_sharedpath(request, path)
+
+                # This case is for a path having been marked as private and
+                # then made public
+                else:
+                    try:
+                        SharedPath.objects.get(path = path)
+                    except SharedPath.DoesNotExist:
+                        _save_sharedpath(request, path)
+
+                path.personal = False
+
+            # path is personal
+            else:
+                # check if a personal path has an existing shared_path
+                # and remove it. This case is for a path having been
+                # marked as public and then made private                
+                if not path_created:
+                    try:
+                        shared = SharedPath.objects.get(path = path)
+                        if shared.like_votes.count < 4:
+                            shared.delete()
+                            # need to possibly add return value here to indicate
+                            # successful removal
+                        else:
+                            pass
+                            # need to possibly add return value here to indicate
+                            # that the bookmark has too many likes to remove 
+                    except SharedPath.DoesNotExist:
+                        pass
+                # else path just created
+                    # no need to check for existing SharedPath, since 
+                    # path was just created                              
+
+                path.personal = True
+
+            return HttpResponseRedirect(reverse(user_page, args=[request.user.username]))
+        
+    else:     
+        data = {}
+        if 'edit' in request.GET or 'ids' in request.GET:
+            if 'edit' in request.GET:
+                edit_path = True
+                edit_id = request.GET['edit']
+                path = get_object_or_404(Path, pk=edit_id)
+                title = path.title
+                features = path.features    
+                tags = path.tags
+
+            else:                                      
+                ids_list = request.GET['ids'].split(",")
+                request.session['ids_list'] = ids_list
+            
+            # get tags and features for all bookmarks
+            tag_list = []
+            feature_list = []
+            for id in ids_list:
+                bookmark = Bookmark.objects.get(pk=id)
+                tag_list.append(','.join(tag.name for tag in bookmark.tags.all()))
+                feature_list.append(bookmark.features.values_list('id', flat=True))
+            tags = ','.join(tag_list)
+
+            # use set to remove redundant tags/features
+            tags = ', '.join(sorted(set(tags.split(','))))
+
+            features = []
+            # feature_list is actually a ValuesListQuerySet, so iterate
+            # through list and convert to string before join
+            for l in feature_list:
+                features += l
+            features = ','.join(set((str(feature) for feature in features)))
+            
+            data = {
+                'tags': tags,
+                'features': features
+            }
+
+            form = PathSaveForm(initial=data)
+
+            variables = {'form': form}
+            return render(request, 'path_save.html', variables)
+            
+def _path_save(request, form):
+    ids = request.session.get('ids_list', None)
+
+    path_created = False
+    query_set = Path.objects.filter(user = request.user)
+    query_set = query_set.annotate(count=Count('bookmarks')).filter(count=len(ids))
+    for _id in ids:
+        query_set = query_set.filter(bookmarks__id=_id)
+
+    if query_set:
+        path = query_set[0]
+        print path
+    else:
+        path = Path.objects.create(user = request.user)
+        path_created = True
+
+    bookmarks = Bookmark.objects.filter(pk__in = ids)
+    #Update path title.
+    path.title = form.cleaned_data['title']
+
+    path.personal = form.cleaned_data['personal']
+
+    # Save path to database.
+    path.save()
+
+    path.bookmarks.add(*bookmarks)
+
+    # Get features from form
+    features = form.cleaned_data['features']
+
+    #Add features to path
+    path.features.add(*features)
+    # for feature in features:
+    #     path.features.add(feature)
+
+    # Using django-taggit tags added after path is saved
+    # Get tags from form
+    tags = form.cleaned_data['tags']
+    path.tags.set(*tags)
+
+    return path, path_created
+
+def _save_sharedpath(request, path):
+
+    initial_hot_score = 0
+
+    shared_path = SharedPath.objects.create(
+        path = path,
+        s_title = path.title,
+        hot_score = initial_hot_score
+    )
+
+    ip = get_ip(request)
+
+    LikeVote.objects.create(content_object = shared_path, user = request.user, ip = ip)
+
+    shared_path.hot_score = shared_path.get_hot_score()
+    shared_path.save()
                 
 def tag_page(request, tag_slug):
     tag = get_object_or_404(Tag, slug=tag_slug)
-    bookmarks = Bookmark.objects.filter(tags__name=tag.name)
-    shared_bookmarks = SharedBookmark.objects.filter(bookmark__in=bookmarks)
+
+    shared_bookmarks = SharedBookmark.objects.filter(bookmark__tags__name=tag.name)
+    shared_paths = SharedPath.objects.filter(path__tags__name=tag.name)
+    resources = sorted(chain(shared_bookmarks, shared_paths), key=attrgetter('created'), reverse=False)
     variables = {
-        'shared_bookmarks': shared_bookmarks, 
+        'resources': resources, 
         'tag_name': tag.name,
         'show_tags': True, 
-        'show_user': True
+        'show_user': True,
+        'palette': True
     }
     return render(request, 'tag_page.html', variables)
 
@@ -385,50 +640,41 @@ def _bookmark_save(request, form):
     features = form.cleaned_data['features']
 
     # Add features to bookmark
-    for feature in features:
-        bookmark.features.add(feature)
+    bookmark.features.add(*features)
+    # for feature in features:
+    #     bookmark.features.add(feature)
 
     # Using django-taggit tags added after bookmark is saved
     # Get tags from form
     tags = form.cleaned_data['tags']
     bookmark.tags.set(*tags)
 
-
     return bookmark, bookmark_created
 
 
 def _save_sharedbookmark(request, bookmark):
-    # interest_poll = SingleChoicePoll.objects.create(
-    #     question = "Interest Poll"
-    # )                
-
-    # Create poll to report abuse.
-    # report_abuse_poll = SingleChoicePoll.objects.create(
-    #     question = "Report Abuse Poll"
-    # )                 
-
+            
     initial_hot_score = 0
 
     shared_bookmark = SharedBookmark.objects.create(
         bookmark = bookmark,
+        s_title = bookmark.title,
         # interest_poll = interest_poll,
         # report_abuse_poll = report_abuse_poll,
         hot_score = initial_hot_score
     )        
 
-    # SingleChoiceVote.objects.create(
-    #     user = request.user, 
-    #     poll = shared_bookmark.interest_poll, 
-    #     ip = get_ip(request)
+    # LikeVote.objects.create(
+    #     user = request.user,
+    #     ip = get_ip(request),
+    #     shared_bookmark = shared_bookmark
     # )
 
-    LikeVote.objects.create(
-        user = request.user,
-        ip = get_ip(request),
-        shared_bookmark = shared_bookmark
-    )
+    ip = get_ip(request)
 
-    shared_bookmark.hot_score = shared_bookmark.get_hot_score()
+    LikeVote.objects.create(content_object = shared_bookmark, user = request.user, ip = ip)
+
+    #Sshared_bookmark.hot_score = shared_bookmark.get_hot_score()
     shared_bookmark.save()
 
 

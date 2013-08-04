@@ -83,4 +83,51 @@ class LinkSaveForm(forms.Form):
 
 		)
 
+class PathSaveForm(forms.Form):
+
+	title = forms.CharField(
+		label=u'Title', 
+		widget=forms.TextInput(attrs={'size':64})
+	)
+	personal = forms.BooleanField(
+		label=u'Private Path',
+		required=False
+	)
+	tags = TagField(
+		label=u'Tags',
+		required=False,
+		widget=forms.TextInput(attrs={'size': 64})
+	)
+	features = forms.ModelMultipleChoiceField(
+		queryset=Feature.objects.all(), 
+		required=False, 
+		widget=forms.CheckboxSelectMultiple
+	)	
+
+	def __init__(self, *args, **kwargs):
+		super(PathSaveForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper()
+		self.helper.form_id = 'path-save-form'
+		self.helper.form_method = 'post'
+		self.helper.form_action = '.'
+		self.helper.layout = Layout (
+			Div(
+				Fieldset (
+					'Save Path',
+					Div(
+						Field('title', css_class='span4', placeholder="title"),
+						InlineCheckboxes('features'),
+						Field('tags', placeholder="tags"),
+						'personal',
+						Submit('submit', 'Save'),
+						css_class ='well'
+					),
+				),
+				css_class = 'span5'
+			)
+			
+
+		)	
+
+
 

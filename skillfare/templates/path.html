@@ -1,0 +1,30 @@
+{% load bookmarks_extras %}
+
+<div><a href="{% url 'path_detail' resource.id resource.slug %}">{{ resource.title }}</a></div>
+            
+{% if resource.features %}
+<div>
+
+{% for feature in resource.features.all %}
+    <span><i class="{{ feature.description|font_icon }} icon-large bookmark_icon_nolink"></i></span>
+{% endfor %}
+
+</div>
+{% endif %}
+
+
+
+<hr>
+
+<div>           
+    {% if resource.tags %} 
+    <i class="icon-tags icon-large bookmark_icon_nolink"></i>                  
+        {% for tag in resource.tags.all %}
+            <a href="{% url 'bookmarks.views.tag_page' tag.slug %}">
+            {{ tag.name }}</a>{% if not forloop.last %},{% endif %}
+        {% endfor %}        
+    {% else %}
+        None.
+    {% endif %}
+</div>
+

@@ -1,24 +1,27 @@
-{% if bookmarks %}
-<div id="bookmarks" class="row">
-    {% for bookmark in bookmarks %}
-        {% if request.user.username == username or not bookmark.personal %}
-            <article class="thumbnail bookmark item span3">
-                {% include "bookmark.html" %}
-
-                {% if show_single_edit %}
-                    <a href="{% url 'bookmarks.views.bookmark_save' %}?url={{bookmark.link.url}}" class="edit">edit</a>
-                {% endif %}
-            </article>
+{% if resources %}
+    {% if path %}
+        <div id="path_bookmarks" class="row">
+    {% else %}        
+        <div id="bookmarks" class="row">
+    {% endif %}        
+    {% for resource in resources %}
+        {% if request.user.username == username or not resource.personal %}
+            {% if resource.bookmark.link %}
+                <article class="thumbnail bookmark item span3">
+                    {% include "shared_bookmark.html" %}
+                </article>
+            {% else %}
+                <article class="thumbnail path item span3">
+                    {% include "shared_path.html" %}
+                </article>
+            {% endif %}
         {% endif %}
     {% endfor %}
 </div>
 
 {% else %}
-    <p>No bookmarks found.</p>
+    <p>No resources found.</p>
 {% endif %}
-
-
-
 
 
 
