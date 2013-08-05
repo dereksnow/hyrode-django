@@ -54,9 +54,9 @@ ul.errorlist {
    /* background-color: #FFFFFF;*/
 /*    background-image:url('../images/top-border.png');    
     background-repeat:repeat-x; */
-    /*background-color:#303030;*/
+    /*background-color:#67FFDF;*/
 background-image:-moz-linear-gradient(top,#282828,#616161,#303030);
-background-image:-webkit-linear-gradient(top,#FFD54E, #FFD54E 40px, #ffffff 40px,#F5F5F5);
+background-image:-webkit-linear-gradient(top,#00758E 40px, #ffffff 40px,#FFFFFF);
 background-image:-o-linear-gradient(top,#282828,#616161,#303030);
 background-image:-ms-linear-gradient(top,#282828,#616161,#303030);
 background-image:linear-gradient(top,#282828,#616161,#303030);
@@ -98,7 +98,7 @@ a.bookmark_icon_link {
 }
 
 .bookmark .top-banner {
-  color: #4F4F4F;
+  color: #FFFFFF;
   /*text-shadow: 0 1px 0 #424254;*/
 }
 
@@ -128,7 +128,7 @@ body {
     padding-bottom: 40px;
     font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
     /*background-image:url('../images/grey-skies.png');*/    
-    background-color: #FFFFFF;
+    background-color: #003642;
 }
 
 body.palette {
@@ -157,7 +157,7 @@ textarea {
 }
 
 .navbar-inner {
-    background-color: #ffffff;
+    background-color: #ffe451;
     background-image: none;
 }
 
@@ -203,7 +203,7 @@ article a {
     border-top-left-radius: 0; /* remove rounded border */
     border-top-right-radius: 0; /* remove rounded border */
     padding: 10px;
-    border: 1px solid #ccc;
+    border: none;
 }
 
 .thumbnail-draggable {
